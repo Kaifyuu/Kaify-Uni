@@ -113,6 +113,38 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // --- Dynamic Data Fetch (GET Request) ---
+        async function fetchCatalog() {
+            try {
+                const response = await fetch('products.json');
+                if (!response.ok) throw new Error('Network response failed');
+                
+                const products = await response.json();
+                const grid = document.getElementById('productGrid');
+                grid.innerHTML = ''; // Clear container
+                
+                products.forEach(product => {
+                    grid.innerHTML += `
+                        <div class="col-md-4 col-sm-6">
+                            <div class="card h-100 shadow-sm">
+                                <div class="product-img-placeholder">${product.imageText}</div>
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">${product.name}</h5>
+                                    <h6 class="mb-3">$${product.price.toFixed(2)}</h6>
+                                    <button class="btn btn-outline-primary mt-auto add-to-cart-btn" 
+                                        data-id="${product.id}" 
+                                        data-name="${product.name}" 
+                                        data-price="${product.price}">Add to Cart</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error fetching catalog:", error);
+                document.getElementById('productGrid').innerHTML = '<p class="text-danger text-center w-100">Failed to load catalog.</p>';
+            }
+        }
         // --- Shopping Cart Logic ---
         let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
 
@@ -143,9 +175,9 @@
             localStorage.setItem('protoCart', JSON.stringify(cart));
         };
 
-        // Add to cart click event
-        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
+// Add to cart click event (Event Delegation for dynamic HTML)
+        document.getElementById('productGrid').addEventListener('click', (e) => {
+            if (e.target.classList.contains('add-to-cart-btn')) {
                 const id = e.target.dataset.id;
                 const name = e.target.dataset.name;
                 const price = parseFloat(e.target.dataset.price);
@@ -157,7 +189,7 @@
                     cart.push({ id, name, price, qty: 1 });
                 }
                 updateCartUI();
-            });
+            }
         });
 
         // Clear cart
@@ -176,6 +208,7 @@
 
         // Initialize UI on load
         updateCartUI();
+        fetchCatalog(); // Trigger the GET request
     </script>
 </body>
 </html>
