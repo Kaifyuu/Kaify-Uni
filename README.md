@@ -37,6 +37,7 @@ flowchart TD
     CheckDB -->|Yes| ShowExistErr
     ShowExistErr --> Input
 
+```mermaid
 sequenceDiagram
     %% Actors and Objects
     participant Browser as Browser / DOM
