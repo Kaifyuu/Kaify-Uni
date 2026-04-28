@@ -1,0 +1,71 @@
+@startuml
+left to right direction
+
+' High Contrast Styling
+skinparam usecase {
+    BackgroundColor #E1F5FE
+    BorderColor #0288D1
+    FontColor #000000
+    FontSize 14
+}
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    FontColor #000000
+}
+skinparam package {
+    BackgroundColor #FAFAFA
+    BorderColor #333333
+    FontColor #000000
+}
+
+' Actors
+actor "Guest Customer" as Guest
+actor "Registered Customer" as RegUser
+actor "Store Administrator" as Admin
+actor "Payment Gateway" as Payment <<External>>
+actor "Shipping API" as Shipping <<External>>
+
+' Inheritance
+RegUser -|> Guest : Inherits
+
+package "E-Commerce Platform" {
+    usecase "Browse & Search Catalog" as UC1
+    usecase "Manage Shopping Cart" as UC2
+    usecase "Checkout" as UC3
+    usecase "Register / Login" as UC4
+    usecase "Manage Profile & Orders" as UC5
+    
+    usecase "Manage Product Inventory" as UC6
+    usecase "Process & Fulfill Orders" as UC7
+    usecase "Manage Users & Roles" as UC8
+    
+    usecase "Process Payment" as UC9
+    usecase "Calculate Shipping Rates" as UC10
+}
+
+' Primary Interactions
+Guest --> UC1
+Guest --> UC2
+Guest --> UC3
+Guest --> UC4
+
+RegUser --> UC5
+
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+
+' System / External Interactions
+UC9 --> Payment
+UC10 --> Shipping
+
+' UML Include and Extend Dependencies
+' Include: Base UC depends on Included UC
+UC3 ..> UC9 : <<include>>
+UC3 ..> UC10 : <<include>>
+
+' Extend: Extending UC adds optional behavior to Base UC
+UC4 ..> UC3 : <<extend>>
+
+@enduml
