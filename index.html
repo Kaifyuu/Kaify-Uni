@@ -142,18 +142,18 @@
          * generating HTML and updating the Browser's DOM. 
          * It does not know or care where the data came from.
          */
-        function renderUI(products) {
+function renderUI(products) {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = ''; // Clear any loading states or old content
             
             // Loop through each product object in the data array
             products.forEach(product => {
-                // Inject the dynamic data (product.name, product.price) into the HTML template
                 // DATA FLOW: Data is permanently written into the Browser's visible DOM.
+                // UPDATED: Now uses an <img> tag with dynamic src and alt attributes.
                 grid.innerHTML += `
                     <div class="col-md-4 col-sm-6">
                         <div class="card h-100 shadow-sm">
-                            <div class="product-img-placeholder">${product.imageText}</div>
+                            <img src="${product.imageUrl}" class="card-img-top border-bottom" alt="Image of ${product.name}" style="height: 200px; object-fit: cover;">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">${product.name}</h5>
                                 <h6 class="mb-3">$${product.price.toFixed(2)}</h6>
