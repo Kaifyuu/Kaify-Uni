@@ -36,6 +36,12 @@ flowchart TD
     Validate -->|Yes| CheckDB
     CheckDB -->|Yes| ShowExistErr
     ShowExistErr --> Input
+    
+    %% Success Path
+    CheckDB -->|No| SaveDB
+    SaveDB --> SendEmail
+    SendEmail --> Success
+    Success --> End
 ```
 ```mermaid
 sequenceDiagram
