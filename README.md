@@ -1,5 +1,5 @@
 # Kaify-Uni
-A repository made for my university projects.
+A repository made for my university project.
 
 ![E-Commerce UML Diagram](https://uml.planttext.com/plantuml/png/VLNhRjem5FuVAUzWCMdxHLSAj1GXL9f2LwdLK14Fu3c7O3MnaUsqOvTtt_4DceWkI1X_v_FvpitXHXkgJ5sLQLB2nX0ZYUB5rf2SAs26Iv4cQVA5V4EGP58OHRKXAxClkIZIHBzmiQEALgJMmAW6yZjD23wtbBqKIjOYpsGf5Vaqxos6YtamIfM32eRpYz7ehkSD2nI8i7kEy8h_0j8RfCdVzwgK6IH_fBbmpodDblCMt93OeLTQV9pOOcO_9qJwxlcVY2tip6QWqyHdqhcl0UkRrTh82bI7K4qST20yGy6r0GLvauNuMeCwy5Ru3MIMLrmWNr7SEfv33gmbtLSW3Bcd1jxetZ4YDfdCVwAGeELqUdIxvRiTjfxCbW-EVG2QT9lQWzY2ueOA1caIuYFTFrEV4Hb7WhRqMEREl9l92hDYG9ObDHkfgauiVXoopgsIRxX-9YkWYk5aKaDBMRY8rbclnNwYmhfURQKFDSEH3zIB5ZNR0dkHTJJtM-POVVALFCg2Yq0Rd1PSAhdXfGtpkvqB7TX3p_xmJ5upWxLvnIP8jG-7Bbjqv37G6dqlwX9LogR6rMdljWNspBCi8L979yE9_iCq1EvrkroqP3Ls2Ovpy8oxwBftdFEbuXLLUymBoqVTcmNxxYUXsvtwhhtVNZIt_UPsOBqUPif1GmkvyGx0PNDxrToEV5ohFVQpmdx6wMr5Y3cx0w4E5kYTEoHcxFsidnxn92lh70WLkNE7ontiS071E6X_9nnbZEyHhDyw8xaZQ295jEK8Mva-EJkpWLxZJPbCk3VQktKqOIGjczNmqkEmsfwW3isjoCvcXJd-W2rzvNYXyNqV8h5-1y5ltxa5TzvxlS5V-2_n3m00)
 
@@ -36,6 +36,25 @@ flowchart TD
     Validate -->|Yes| CheckDB
     CheckDB -->|Yes| ShowExistErr
     ShowExistErr --> Input
+
+sequenceDiagram
+    %% Actors and Objects
+    participant Browser as Browser / DOM
+    participant JS as JavaScript Logic
+    participant Server as Web Server
+
+    %% The Execution Flow
+    Browser->>JS: requestProducts()
+    
+    activate JS
+    JS->>Server: fetch()
+    
+    activate Server
+    Server-->>JS: return JSON
+    deactivate Server
+    
+    JS->>Browser: renderProducts()
+    deactivate JS
     
     %% Success Path
     CheckDB -->|No| SaveDB
