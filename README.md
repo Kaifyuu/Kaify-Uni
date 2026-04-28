@@ -36,13 +36,13 @@ flowchart TD
     Validate -->|Yes| CheckDB
     CheckDB -->|Yes| ShowExistErr
     ShowExistErr --> Input
-
+```
 ```mermaid
 sequenceDiagram
     %% Actors and Objects
-    participant Browser as Browser / DOM
-    participant JS as JavaScript Logic
-    participant Server as Web Server
+    participant Browser
+    participant JS as JavaScript
+    participant Server
 
     %% The Execution Flow
     Browser->>JS: requestProducts()
@@ -56,9 +56,4 @@ sequenceDiagram
     
     JS->>Browser: renderProducts()
     deactivate JS
-    
-    %% Success Path
-    CheckDB -->|No| SaveDB
-    SaveDB --> SendEmail
-    SendEmail --> Success
-    Success --> End
+```
