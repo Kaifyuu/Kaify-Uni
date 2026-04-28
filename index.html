@@ -104,7 +104,7 @@
         // --- Dynamic Data Fetch (GET Request) ---
         async function fetchCatalog() {
             try {
-                const response = await fetch('products.json');
+                const response = await fetch('data/json/products.json');
                 if (!response.ok) throw new Error('Network response failed');
                 
                 const products = await response.json();
