@@ -56,16 +56,43 @@ app.get('/api/orders/:userId', (req, res) => {
     });
 });
 
-// 4. Save Personalized Order
-app.post('/api/orders', (req, res) => {
-    const { userId, date, total, items, statusStep, statusText } = req.body;
-    const itemsJson = JSON.stringify(items);
-    
-    db.query('INSERT INTO orders (userId, date, total, items, statusStep, statusText) VALUES (?, ?, ?, ?, ?, ?)', 
-    [userId, date, total, itemsJson, statusStep, statusText], (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Order saved successfully', orderId: results.insertId });
+// Mock Payment Gateway (Simulating Stripe)
+const processMockPayment = (cardNumber) => {
+    return new Promise((resolve, reject) => {
+        // Simulate network latency (1 second processing time)
+        setTimeout(() => {
+            // Stripe's official universal test card number
+            if (cardNumber === '4242424242424242') {
+                resolve({ status: 'success', transactionId: 'txn_' + Math.floor(Math.random() * 1000000) });
+            } else {
+                reject({ status: 'error', message: 'Card declined by issuing bank. Please use a valid card.' });
+            }
+        }, 1000); 
     });
+};
+
+// 4. Save Personalized Order (Now with Payment Validation!)
+app.post('/api/orders', async (req, res) => {
+    const { userId, date, total, items, statusStep, statusText, paymentDetails } = req.body;
+    
+    // Step 1: Verify the payment FIRST
+    try {
+        const paymentResult = await processMockPayment(paymentDetails.cardNumber);
+        console.log(`Payment Approved: ${paymentResult.transactionId}`);
+        
+        // Step 2: Only if payment succeeds, save to MySQL
+        const itemsJson = JSON.stringify(items);
+        db.query('INSERT INTO orders (userId, date, total, items, statusStep, statusText) VALUES (?, ?, ?, ?, ?, ?)', 
+        [userId, date, total, itemsJson, statusStep, statusText], (err, results) => {
+            if (err) return res.status(500).json({ error: 'Database failed after payment', details: err.message });
+            res.json({ message: 'Order saved successfully', orderId: results.insertId, transactionId: paymentResult.transactionId });
+        });
+
+    } catch (paymentError) {
+        // Payment failed! Do not save to DB, return a 402 Payment Required error
+        console.log(`Payment Failed: ${paymentError.message}`);
+        return res.status(402).json({ error: paymentError.message });
+    }
 });
 
 // 5. Admin: Fetch ALL Orders (Global)

@@ -413,35 +413,61 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
                 bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
                 return alert("You must be logged in to checkout!");
             }
+
+            // Grab the credit card number from the input field
+            const ccInput = document.querySelector('input[placeholder="16 Digits Required"]').value;
+            
+            // UI Feedback: Change button text to show processing
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = "Processing Payment...";
+            submitBtn.disabled = true;
             
             const ship = parseFloat(document.getElementById('shippingSelect').value);
             const total = cart.reduce((s, i) => s + (i.price * i.qty), 0) + ship;
             const step = Math.floor(Math.random() * 3) + 1;
             
             const newOrder = {
-                userId: userId, // Attached the specific user ID!
+                userId: userId,
                 date: new Date().toLocaleDateString(),
                 total: total.toFixed(2),
                 items: cart,
                 statusStep: step,
-                statusText: ["Placed", "Packed", "Shipped", "Delivered"][step]
+                statusText: ["Placed", "Packed", "Shipped", "Delivered"][step],
+                paymentDetails: { cardNumber: ccInput } // Send to server for validation
             };
 
             try {
-                await fetch('http://localhost:3000/api/orders', {
+                const response = await fetch('http://localhost:3000/api/orders', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newOrder)
                 });
                 
+                const data = await response.json();
+
+                // Handle Mock Stripe Rejection
+                if (!response.ok) {
+                    alert(`Payment Error: ${data.error}`);
+                    submitBtn.innerText = originalBtnText;
+                    submitBtn.disabled = false;
+                    return; // Stop execution, keep cart intact
+                }
+                
+                // Success!
                 fetchOrders();
                 e.target.classList.add('d-none');
                 document.getElementById('checkoutSuccess').classList.remove('d-none');
                 cart = []; 
                 updateCartUI();
                 localStorage.removeItem('protoCart'); 
+                
             } catch (err) {
-                alert("Server error during checkout.");
+                alert("Server connection failed during checkout.");
+            } finally {
+                // Always reset button state just in case
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
             }
         });
 
