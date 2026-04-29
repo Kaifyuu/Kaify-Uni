@@ -6,11 +6,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Cloud-Ready MySQL Connection
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '', 
-    database: 'ecommerce_db'
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '', 
+    database: process.env.DB_NAME || 'ecommerce_db',
+    port: process.env.DB_PORT || 3306
 });
 
 db.connect(err => {
@@ -114,4 +116,6 @@ app.put('/api/products/:id', (req, res) => {
     });
 });
 
-app.listen(3000, () => console.log('Store Server running on http://localhost:3000'));
+// Cloud-Ready Port Listener
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Store Server running on port ${PORT}`));
