@@ -209,8 +209,6 @@
     <script>
         let allProducts = [];
         let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
-        let orderHistory = JSON.parse(localStorage.getItem('protoOrders')) || [];
-
         async function requestProducts() {
             try {
                 // UPDATE: Now fetching directly from the Node.js API connected to MySQL
@@ -387,25 +385,64 @@
             }
         });
 
-        document.getElementById('checkoutForm').addEventListener('submit', e => {
+document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (cart.length === 0) return alert("Cart is empty.");
+            
             const ship = parseFloat(document.getElementById('shippingSelect').value);
             const total = cart.reduce((s, i) => s + (i.price * i.qty), 0) + ship;
             const step = Math.floor(Math.random() * 3) + 1;
-            orderHistory.push({ date: new Date().toLocaleDateString(), total: total.toFixed(2), items: [...cart], statusStep: step, statusText: ["Placed", "Packed", "Shipped", "Delivered"][step] });
-            localStorage.setItem('protoOrders', JSON.stringify(orderHistory));
-            updateOrderHistoryUI();
-            e.target.classList.add('d-none');
-            document.getElementById('checkoutSuccess').classList.remove('d-none');
-            cart = []; updateCartUI();
+            
+            const newOrder = {
+                date: new Date().toLocaleDateString(),
+                total: total.toFixed(2),
+                items: cart,
+                statusStep: step,
+                statusText: ["Placed", "Packed", "Shipped", "Delivered"][step]
+            };
+
+            try {
+                // Push to the Node.js backend instead of localStorage
+                await fetch('http://localhost:3000/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newOrder)
+                });
+                
+                // Refresh the UI from the DB
+                fetchOrders();
+                
+                e.target.classList.add('d-none');
+                document.getElementById('checkoutSuccess').classList.remove('d-none');
+                cart = []; 
+                updateCartUI();
+                localStorage.removeItem('protoCart'); // Clear local cart
+            } catch (err) {
+                console.error("Checkout failed:", err);
+                alert("Server error during checkout.");
+            }
         });
 
-        const updateOrderHistoryUI = () => {
+// Fetch orders from backend
+        async function fetchOrders() {
+            try {
+                const response = await fetch('http://localhost:3000/api/orders');
+                const orders = await response.json();
+                updateOrderHistoryUI(orders);
+            } catch (err) {
+                console.error("Failed to fetch orders:", err);
+            }
+        }
+
+        const updateOrderHistoryUI = (orders) => {
             const list = document.getElementById('orderHistoryList');
-            list.innerHTML = orderHistory.length ? '' : '<p class="text-muted text-center mt-4">No orders yet.</p>';
-            [...orderHistory].reverse().forEach(o => {
-                const itemsHtml = (o.items || []).map(i => `<div class="d-flex justify-content-between small text-muted"><span>${i.qty}x ${i.name}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`).join('');
+            list.innerHTML = orders.length ? '' : '<p class="text-muted text-center mt-4">No orders yet.</p>';
+            
+            orders.forEach(o => {
+                // Ensure items are parsed correctly from MySQL JSON
+                const itemsArray = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+                
+                const itemsHtml = (itemsArray || []).map(i => `<div class="d-flex justify-content-between small text-muted"><span>${i.qty}x ${i.name}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`).join('');
                 list.innerHTML += `
                     <div class="card mb-3 shadow-sm border-0 bg-white">
                         <div class="card-body">
@@ -424,7 +461,7 @@
         document.getElementById('clearCartBtn').addEventListener('click', () => { cart = []; updateCartUI(); });
         document.getElementById('checkoutModal').addEventListener('show.bs.modal', () => { const f = document.getElementById('checkoutForm'); f.classList.remove('d-none'); f.reset(); document.getElementById('checkoutSuccess').classList.add('d-none'); });
 
-        updateCartUI(); checkLoginState(); updateOrderHistoryUI(); requestProducts();
+        updateCartUI(); checkLoginState(); fetchOrders(); requestProducts();
     </script>
 </body>
 </html>
