@@ -68,4 +68,23 @@ app.post('/api/orders', (req, res) => {
     });
 });
 
+// 5. Admin: Fetch ALL Orders (Global)
+app.get('/api/admin/orders', (req, res) => {
+    db.query('SELECT * FROM orders ORDER BY id DESC', (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+// 6. Admin: Update Product Stock directly in MySQL
+app.put('/api/products/:id', (req, res) => {
+    const newStock = req.body.stock;
+    const productId = req.params.id;
+    
+    db.query('UPDATE products SET stock = ? WHERE id = ?', [newStock, productId], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Stock updated successfully' });
+    });
+});
+
 app.listen(3000, () => console.log('Store Server running on http://localhost:3000'));

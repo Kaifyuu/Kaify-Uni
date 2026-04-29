@@ -59,52 +59,75 @@
     </div>
 
     <script>
-        const overrides = JSON.parse(localStorage.getItem('adminProductOverrides')) || {};
-        const orders = JSON.parse(localStorage.getItem('protoOrders')) || [];
-
-        async function initDashboard() {
-            // Load Orders
-            const orderList = document.getElementById('adminOrderList');
-            if (orders.length === 0) {
-                orderList.innerHTML = '<li class="list-group-item text-muted text-center py-4">No recent orders.</li>';
-            } else {
-                [...orders].reverse().forEach((o, i) => {
-                    orderList.innerHTML += `
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                            <div><h6 class="mb-0">Order #${1000 + i}</h6><small class="text-muted">${o.date} • ${o.statusText}</small></div>
-                            <span class="badge bg-success fs-6">$${o.total}</span>
-                        </li>`;
-                });
-            }
-
-            // Load Inventory (UC6)
+ async function initDashboard() {
             try {
-                const response = await fetch('data/json/products.json');
-                const products = await response.json();
-                const table = document.getElementById('inventoryTable');
+                // 1. Fetch Global Orders from Database
+                const ordersRes = await fetch('http://localhost:3000/api/admin/orders');
+                const orders = await ordersRes.json();
+                
+                const orderList = document.getElementById('adminOrderList');
+                if (orders.length === 0) {
+                    orderList.innerHTML = '<li class="list-group-item text-muted text-center py-4">No orders found in database.</li>';
+                } else {
+                    orderList.innerHTML = ''; // Clear loading state
+                    orders.forEach(o => {
+                        orderList.innerHTML += `
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                <div>
+                                    <h6 class="mb-0">Order #${o.id} <span class="badge bg-secondary ms-2">User ID: ${o.userId}</span></h6>
+                                    <small class="text-muted">${o.date} • ${o.statusText}</small>
+                                </div>
+                                <span class="badge bg-success fs-6">$${o.total}</span>
+                            </li>`;
+                    });
+                }
 
+                // 2. Fetch Live Inventory from Database
+                const productsRes = await fetch('http://localhost:3000/api/products');
+                const products = await productsRes.json();
+                
+                const table = document.getElementById('inventoryTable');
+                table.innerHTML = ''; // Clear loading state
                 products.forEach(p => {
-                    const currentStock = overrides[p.id] ? overrides[p.id].stock : p.stock;
                     table.innerHTML += `
                         <tr>
                             <td>#${p.id}</td>
                             <td class="fw-bold">${p.name}</td>
                             <td><span class="badge bg-secondary">${p.category}</span></td>
-                            <td><span class="fw-bold ${currentStock < 5 ? 'text-danger' : 'text-dark'}">${currentStock}</span></td>
+                            <td><span class="fw-bold ${p.stock < 5 ? 'text-danger' : 'text-dark'}">${p.stock}</span></td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary" onclick="updateStock('${p.id}', '${p.name}', ${currentStock})">Update Stock</button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="updateStock('${p.id}', '${p.name}', ${p.stock})">Update Stock</button>
                             </td>
                         </tr>`;
                 });
-            } catch (e) { console.error("Inventory error:", e); }
+            } catch (error) {
+                console.error("Failed to load admin data:", error);
+                alert("Cannot connect to backend server.");
+            }
         }
 
-        function updateStock(id, name, current) {
-            const newStock = prompt(`Update stock for ${name}:`, current);
-            if (newStock !== null && !isNaN(newStock)) {
-                overrides[id] = { stock: parseInt(newStock) };
-                localStorage.setItem('adminProductOverrides', JSON.stringify(overrides));
-                location.reload(); // Refresh to show new numbers
+        async function updateStock(id, name, currentStock) {
+            const newStock = prompt(`Update stock for ${name}:`, currentStock);
+            
+            // Validate input
+            if (newStock !== null && !isNaN(newStock) && newStock.trim() !== '') {
+                try {
+                    // Send PUT request to Node.js backend
+                    const response = await fetch(`http://localhost:3000/api/products/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ stock: parseInt(newStock) })
+                    });
+                    
+                    if (response.ok) {
+                        location.reload(); // Refresh the table to see the new DB value
+                    } else {
+                        alert("Failed to update stock in database.");
+                    }
+                } catch (error) {
+                    console.error("Update failed:", error);
+                    alert("Server error during stock update.");
+                }
             }
         }
 
