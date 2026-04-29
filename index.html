@@ -370,18 +370,40 @@
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.setItem('isLoggedIn', 'false');
+            localStorage.removeItem('userId'); // Clear session
+            updateOrderHistoryUI([]); // Wipe the UI clean
             checkLoginState();
             bootstrap.Offcanvas.getInstance(document.getElementById('profileOffcanvas')).hide();
         });
 
-        document.getElementById('authForm').addEventListener('submit', e => {
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const u = document.getElementById('authUsername').value, p = document.getElementById('authPassword').value;
-            if (u === 'admin' && p === 'admin123') window.location.href = 'admin.html';
-            else {
+            const u = document.getElementById('authUsername').value;
+            const p = document.getElementById('authPassword').value;
+
+            if (u === 'admin' && p === 'admin123') {
+                window.location.href = 'admin.html';
+                return;
+            }
+
+            try {
+                const res = await fetch('http://localhost:3000/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                
+                if (!res.ok) return alert('Incorrect password.');
+                
+                const data = await res.json();
                 localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userId', data.userId); // Save DB ID
+                
                 checkLoginState();
+                fetchOrders(); // Pull their specific orders
                 bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+            } catch (err) {
+                alert('Server connection failed.');
             }
         });
 
@@ -389,11 +411,18 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
             e.preventDefault();
             if (cart.length === 0) return alert("Cart is empty.");
             
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
+                return alert("You must be logged in to checkout!");
+            }
+            
             const ship = parseFloat(document.getElementById('shippingSelect').value);
             const total = cart.reduce((s, i) => s + (i.price * i.qty), 0) + ship;
             const step = Math.floor(Math.random() * 3) + 1;
             
             const newOrder = {
+                userId: userId, // Attached the specific user ID!
                 date: new Date().toLocaleDateString(),
                 total: total.toFixed(2),
                 items: cart,
@@ -402,31 +431,30 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
             };
 
             try {
-                // Push to the Node.js backend instead of localStorage
                 await fetch('http://localhost:3000/api/orders', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newOrder)
                 });
                 
-                // Refresh the UI from the DB
                 fetchOrders();
-                
                 e.target.classList.add('d-none');
                 document.getElementById('checkoutSuccess').classList.remove('d-none');
                 cart = []; 
                 updateCartUI();
-                localStorage.removeItem('protoCart'); // Clear local cart
+                localStorage.removeItem('protoCart'); 
             } catch (err) {
-                console.error("Checkout failed:", err);
                 alert("Server error during checkout.");
             }
         });
 
 // Fetch orders from backend
-        async function fetchOrders() {
+async function fetchOrders() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) return; // Do not fetch if it's a guest
+
             try {
-                const response = await fetch('http://localhost:3000/api/orders');
+                const response = await fetch(`http://localhost:3000/api/orders/${userId}`);
                 const orders = await response.json();
                 updateOrderHistoryUI(orders);
             } catch (err) {

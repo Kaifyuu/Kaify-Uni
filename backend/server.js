@@ -3,10 +3,9 @@ const mysql = require('mysql2');
 const cors = require('cors');
 
 const app = express();
-app.use(cors()); // Allows your frontend index.html to fetch from this API
+app.use(cors());
 app.use(express.json());
 
-// Initialize MySQL connection
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -19,38 +18,51 @@ db.connect(err => {
     else console.log('Connected successfully to MySQL Database.');
 });
 
-// The single endpoint to serve our catalog
+// 1. Fetch Catalog
 app.get('/api/products', (req, res) => {
     db.query('SELECT * FROM products', (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
-        
-        // Format decimal values from MySQL back into numbers for the frontend math
-        const formattedResults = results.map(p => ({
-            ...p, 
-            price: parseFloat(p.price), 
-            rating: parseFloat(p.rating)
-        }));
-        
-        res.json(formattedResults);
+        res.json(results.map(p => ({...p, price: parseFloat(p.price), rating: parseFloat(p.rating)})));
     });
 });
-// Fetch order history
-app.get('/api/orders', (req, res) => {
-    db.query('SELECT * FROM orders ORDER BY id DESC', (err, results) => {
+
+// 2. Authentication (Auto-Register if user is new)
+app.post('/api/auth', (req, res) => {
+    const { username, password } = req.body;
+    db.query('SELECT id FROM users WHERE username = ?', [username], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        if (results.length > 0) {
+            // User exists, verify password
+            db.query('SELECT id FROM users WHERE username = ? AND password = ?', [username, password], (err, loginRes) => {
+                if (loginRes.length === 0) return res.status(401).json({ error: 'Incorrect password' });
+                res.json({ userId: loginRes[0].id });
+            });
+        } else {
+            // User does not exist, auto-create account
+            db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, password], (err, regRes) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ userId: regRes.insertId });
+            });
+        }
+    });
+});
+
+// 3. Fetch Personalized Orders
+app.get('/api/orders/:userId', (req, res) => {
+    db.query('SELECT * FROM orders WHERE userId = ? ORDER BY id DESC', [req.params.userId], (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(results);
     });
 });
 
-// Save a new order
+// 4. Save Personalized Order
 app.post('/api/orders', (req, res) => {
-    const { date, total, items, statusStep, statusText } = req.body;
-    
-    // Convert the items array into a JSON string for MySQL
+    const { userId, date, total, items, statusStep, statusText } = req.body;
     const itemsJson = JSON.stringify(items);
     
-    const query = 'INSERT INTO orders (date, total, items, statusStep, statusText) VALUES (?, ?, ?, ?, ?)';
-    db.query(query, [date, total, itemsJson, statusStep, statusText], (err, results) => {
+    db.query('INSERT INTO orders (userId, date, total, items, statusStep, statusText) VALUES (?, ?, ?, ?, ?, ?)', 
+    [userId, date, total, itemsJson, statusStep, statusText], (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: 'Order saved successfully', orderId: results.insertId });
     });
