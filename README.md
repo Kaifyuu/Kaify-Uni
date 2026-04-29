@@ -64,3 +64,36 @@ sequenceDiagram
     JS->>Browser: renderProducts()
     deactivate JS
 ```
+```mermaid
+flowchart TD
+    %% Styling
+    classDef startEnd fill:#333,stroke:#333,stroke-width:2px,color:#fff,shape:circle;
+    classDef activity fill:#f9f9f9,stroke:#333,stroke-width:1px;
+    classDef decision fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,shape:diamond;
+
+    %% Nodes
+    Start((Start)):::startEnd
+    UserAction[User Action: <br> Type Search or Select Category]:::activity
+    CaptureInput[Capture Input: <br> Get Search Term & Category]:::activity
+    FilterArray[Filter Array: <br> Compare inputs against allProducts]:::activity
+    CheckResults{Are there matching <br> products?}:::decision
+    UpdateDOM_Grid[Update DOM: <br> Render Product Grid]:::activity
+    UpdateDOM_Empty[Update DOM: <br> Show 'No results found' message]:::activity
+    End((End)):::startEnd
+
+    %% Flow
+    Start --> UserAction
+    UserAction --> CaptureInput
+    
+    %% Implicitly answering Consideration #1
+    CaptureInput -->|If inputs are empty, matches ALL| FilterArray
+    
+    FilterArray --> CheckResults
+    
+    %% Answering Consideration #2
+    CheckResults -->|Yes| UpdateDOM_Grid
+    CheckResults -->|No| UpdateDOM_Empty
+    
+    UpdateDOM_Grid --> End
+    UpdateDOM_Empty --> End
+```
