@@ -59,10 +59,11 @@
     </div>
 
     <script>
+        const API_URL = 'https://kaify-uni-backend.onrender.com/';
  async function initDashboard() {
             try {
                 // 1. Fetch Global Orders from Database
-                const ordersRes = await fetch('http://localhost:3000/api/admin/orders');
+                const ordersRes = await fetch(`${API_URL}api/admin/orders`);
                 const orders = await ordersRes.json();
                 
                 const orderList = document.getElementById('adminOrderList');
@@ -83,7 +84,7 @@
                 }
 
                 // 2. Fetch Live Inventory from Database
-                const productsRes = await fetch('http://localhost:3000/api/products');
+                const productsRes = await fetch(`${API_URL}api/products`);
                 const products = await productsRes.json();
                 
                 const table = document.getElementById('inventoryTable');
@@ -113,7 +114,7 @@
             if (newStock !== null && !isNaN(newStock) && newStock.trim() !== '') {
                 try {
                     // Send PUT request to Node.js backend
-                    const response = await fetch(`http://localhost:3000/api/products/${id}`, {
+                    const response = await fetch(`${API_URL}api/products/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ stock: parseInt(newStock) })

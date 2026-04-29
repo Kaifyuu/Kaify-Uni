@@ -207,14 +207,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // CHANGE THIS TO YOUR RENDER URL BEFORE PUSHING TO GITHUB
-        const API_URL = 'http://localhost:3000';
+        const API_URL = 'https://kaify-uni-backend.onrender.com/';
         let allProducts = [];
         let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
 async function requestProducts() {
             try {
                 // Fetch directly from the Node.js API (MySQL)
-                const response = await fetch('http://localhost:3000/api/products');
+                const response = await fetch(`${API_URL}api/products`);
                 allProducts = await response.json(); 
                 
                 populateCategories(allProducts);
@@ -386,7 +385,7 @@ async function requestProducts() {
             }
 
             try {
-                const res = await fetch('http://localhost:3000/api/auth', {
+                const res = await fetch(`${API_URL}api/auth`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: u, password: p })
@@ -440,7 +439,7 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
             };
 
             try {
-                const response = await fetch('http://localhost:3000/api/orders', {
+                const response = await fetch(`${API_URL}api/orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newOrder)
@@ -479,7 +478,7 @@ async function fetchOrders() {
             if (!userId) return; // Do not fetch if it's a guest
 
             try {
-                const response = await fetch(`http://localhost:3000/api/orders/${userId}`);
+                const response = await fetch(`${API_URL}api/orders/${userId}`);
                 const orders = await response.json();
                 updateOrderHistoryUI(orders);
             } catch (err) {
