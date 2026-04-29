@@ -83,8 +83,7 @@
                     <li class="nav-item"><a class="nav-link text-dark" href="#products">Products</a></li>
                 </ul>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#registerModal">Register</button>
-                    <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+                        <button id="authBtn" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#authModal">Login / Register</button>                    <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
                         Cart <span id="cartCount" class="badge bg-light text-dark ms-1">0</span>
                     </button>
                 </div>
@@ -129,33 +128,39 @@
         </div>
     </section>
 
-    <div class="modal fade" id="registerModal" tabindex="-1">
+<div class="modal fade" id="authModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Create Account</h5>
+                    <h5 class="modal-title">Login / Register</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="registrationForm">
+                    <form id="authForm">
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email address</label>
-                            <input type="email" class="form-control" required>
-                            <div class="form-text">We'll check if this exists in the "DB".</div>
+                            <label class="form-label">Username</label>
+                            <input type="text" id="authUsername" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Password</label>
-                            <input type="password" class="form-control" minlength="6" required>
+                            <input type="password" id="authPassword" class="form-control" required>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                        <button type="submit" class="btn btn-primary w-100">Continue</button>
                     </form>
-                    <div id="regSuccess" class="alert alert-success mt-3 d-none">Registration successful! Verification email sent.</div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="profileOffcanvas">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title">My Profile</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <h6 class="mb-3">Order History</h6>
+            <ul id="orderHistoryList" class="list-group">
+                </ul>
         </div>
     </div>
 
@@ -185,6 +190,13 @@
                                 <label class="form-label">CVV</label>
                                 <input type="text" class="form-control" pattern="\d{3,4}" required>
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Shipping Method</label>
+                            <select id="shippingSelect" class="form-select" required>
+                                <option value="5.00">Standard Shipping (3-5 Days) - $5.00</option>
+                                <option value="15.00">Express Shipping (1-2 Days) - $15.00</option>
+                            </select>
                         </div>
                         <button type="submit" class="btn btn-success w-100">Pay Now</button>
                     </form>
@@ -447,18 +459,88 @@ function renderUI(products) {
             document.getElementById('checkoutSuccess').classList.add('d-none');
         });
 
-        // --- Registration Flow Logic ---
-        document.getElementById('registrationForm').addEventListener('submit', (e) => {
-            e.preventDefault(); // Stop page reload
-            // Mimic successful DB save and email send from Activity Diagram
+// --- Order History & Auth Logic ---
+        let orderHistory = JSON.parse(localStorage.getItem('protoOrders')) || [];
+
+        const checkLoginState = () => {
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                const btn = document.getElementById('authBtn');
+                btn.innerText = 'My Profile';
+                btn.dataset.bsTarget = '#profileOffcanvas';
+                btn.dataset.bsToggle = 'offcanvas';
+            }
+        };
+
+        const updateOrderHistoryUI = () => {
+            const list = document.getElementById('orderHistoryList');
+            list.innerHTML = '';
+            if (orderHistory.length === 0) {
+                list.innerHTML = '<li class="list-group-item text-muted">No past orders.</li>';
+                return;
+            }
+            orderHistory.forEach(order => {
+                list.innerHTML += `
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>${order.date}</strong>
+                            <span>$${order.total}</span>
+                        </div>
+                        <small class="text-muted">${order.itemsCount} items</small>
+                    </li>`;
+            });
+        };
+
+        document.getElementById('authForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('authUsername').value;
+            const pass = document.getElementById('authPassword').value;
+
+            if (user === 'admin' && pass === 'admin123') {
+                window.location.href = 'admin.html'; // Route to Admin Dashboard
+            } else {
+                localStorage.setItem('isLoggedIn', 'true');
+                checkLoginState();
+                bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+            }
+        });
+
+        // --- Simulated Checkout Flow Logic (Updated for Shipping & History) ---
+        document.getElementById('checkoutForm').addEventListener('submit', (e) => {
+            e.preventDefault(); 
+            
+            // Calculate final total including shipping
+            const shippingCost = parseFloat(document.getElementById('shippingSelect').value);
+            const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const finalTotal = (cartTotal + shippingCost).toFixed(2);
+
+            // Save to Order History
+            orderHistory.push({
+                date: new Date().toLocaleDateString(),
+                total: finalTotal,
+                itemsCount: cart.reduce((sum, item) => sum + item.qty, 0)
+            });
+            localStorage.setItem('protoOrders', JSON.stringify(orderHistory));
+            updateOrderHistoryUI();
+
             e.target.classList.add('d-none'); 
-            document.getElementById('regSuccess').classList.remove('d-none');
+            document.getElementById('checkoutSuccess').classList.remove('d-none');
+            
+            cart = [];
+            updateCartUI();
+        });
+
+        // Reset the Checkout UI
+        document.getElementById('checkoutModal').addEventListener('show.bs.modal', () => {
+            const form = document.getElementById('checkoutForm');
+            form.classList.remove('d-none');
+            form.reset(); 
+            document.getElementById('checkoutSuccess').classList.add('d-none');
         });
 
         // Initialize UI on load
         updateCartUI();
-        
-        // Trigger the sequence diagram flow when the script loads
+        checkLoginState();
+        updateOrderHistoryUI();
         requestProducts();
     </script>
 </body>
