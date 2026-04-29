@@ -494,68 +494,6 @@ function renderUI(products) {
                 }, 1000);
             }
         });
-        
-        // --- Modal "Add to Cart" Logic ---
-        document.getElementById('productDetailsBody').addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-add-to-cart-btn')) {
-                // FIX: Stop the click from "bubbling up" to the product grid in the background
-                e.stopPropagation(); 
-
-                const id = e.target.dataset.id;
-                const product = allProducts.find(p => p.id === id);
-                
-                const existingItem = cart.find(item => item.id === id);
-                const currentQty = existingItem ? existingItem.qty : 0;
-
-                if (currentQty >= product.stock) {
-                    alert(`Cannot add more. Only ${product.stock} left in stock!`);
-                    return;
-                }
-
-                if (existingItem) {
-                    existingItem.qty += 1;
-                } else {
-                    cart.push({ id, name: product.name, price: product.price, qty: 1 });
-                }
-                updateCartUI();
-                
-                // Visual feedback logic...
-                const btn = e.target;
-                const originalText = btn.innerText;
-                btn.classList.replace('btn-primary', 'btn-success');
-                btn.innerText = '✓ Added to Cart';
-                setTimeout(() => {
-                    btn.classList.replace('btn-success', 'btn-primary');
-                    btn.innerText = originalText;
-                }, 1000);
-            }
-        });
-            if (e.target.classList.contains('add-to-cart-btn')) {
-                const id = e.target.dataset.id;
-                
-                // 1. Find the product in the master array to check stock
-                const product = allProducts.find(p => p.id === id);
-                if (!product) return;
-
-                // 2. Check how many are currently in the cart
-                const existingItem = cart.find(item => item.id === id);
-                const currentQty = existingItem ? existingItem.qty : 0;
-
-                // 3. Block if adding 1 more exceeds stock
-                if (currentQty >= product.stock) {
-                    alert(`Cannot add more. Only ${product.stock} left in stock!`);
-                    return;
-                }
-
-                // 4. Add or increment
-                if (existingItem) {
-                    existingItem.qty += 1;
-                } else {
-                    cart.push({ id, name: product.name, price: product.price, qty: 1 });
-                }
-                updateCartUI();
-            }
-        });
 
         // --- Offcanvas Cart +/- Button Logic ---
         document.getElementById('cartItemsList').addEventListener('click', (e) => {
