@@ -5,76 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive E-Commerce Prototype</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500,600,700&display=swap" rel="stylesheet">
-    
+    <link href="https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500,600,700&display=swap" rel="stylesheet">
     <style>
-        /* 1. Typography & Animated Background */
         body { 
             font-family: 'General Sans', sans-serif; 
             scroll-behavior: smooth; 
-            /* Chill, smooth flowing animated gradient */
             background: linear-gradient(-45deg, #a18cd1, #fbc2eb, #8fd3f4, #a1c4fd);
             background-size: 400% 400%;
             animation: ambientFlow 15s ease infinite;
             min-height: 100vh;
         }
-
         @keyframes ambientFlow {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
-/* 2. Glassmorphism for UI Elements */
         .navbar, .card, .modal-content, .offcanvas, .form-control, .form-select {
-            /* Using background-color instead of background prevents overriding Bootstrap's SVG dropdown arrows */
             background-color: rgba(255, 255, 255, 0.7) !important;
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px); /* Safari support */
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
         }
-
-        /* 3. Refined Hero Section */
-        .hero-section { 
-            padding: 80px 0; 
-            color: #1a1a1a;
-        }
-        .hero-section .text-muted {
-            color: #4a4a4a !important;
-            font-weight: 500;
-        }
-
-        /* 4. Refined Cards & Inputs */
+        .hero-section { padding: 80px 0; color: #1a1a1a; }
+        .hero-section .text-muted { color: #4a4a4a !important; font-weight: 500; }
         .card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .card:hover { 
-            transform: translateY(-5px); 
-            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15); 
-        }
-        .product-img-placeholder { 
-            height: 200px; 
-            background: rgba(255, 255, 255, 0.5); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: #6c757d; 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-        }
-        
-        /* Make inputs readable over the glass */
+        .card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15); }
         .form-control:focus, .form-select:focus {
             background: rgba(255, 255, 255, 0.9) !important;
             box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.5);
             border-color: rgba(255, 255, 255, 0.8);
         }
-           .modal-open {
-            scroll-behavior: auto !important;
-        }
+        .modal-open { scroll-behavior: auto !important; }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg sticky-top" data-bs-theme="light">
+    <nav class="navbar navbar-expand-lg sticky-top" data-bs-theme="light">
         <div class="container">
             <a class="navbar-brand text-dark fw-bold" href="#">StoreBrand</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -86,8 +53,8 @@
                     <li class="nav-item"><a class="nav-link text-dark" href="#products">Products</a></li>
                 </ul>
                 <div class="d-flex gap-2">
-                        <button id="authBtn" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#authModal">Login / Register</button>                    
-                        <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+                    <button id="authBtn" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#authModal">Login / Register</button>                    
+                    <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
                         Cart <span id="cartCount" class="badge bg-light text-dark ms-1">0</span>
                     </button>
                 </div>
@@ -97,15 +64,14 @@
 
     <header id="home" class="hero-section text-center">
         <div class="container">
-            <h1 class="display-4">Welcome to Our Store</h1>
-            <p class="lead text-muted">Interactive prototype with functional cart and registration.</p>
+            <h1 class="display-4 text-dark">Welcome to Our Store</h1>
+            <p class="lead text-muted">Interactive prototype with functional cart and order tracking.</p>
         </div>
     </header>
     
-<section id="products" class="py-5">
+    <section id="products" class="py-5">
         <div class="container">
-            <h2 class="text-center mb-5">Our Products</h2>
-            
+            <h2 class="text-center text-dark mb-5">Our Products</h2>
             <div class="row mb-4">
                 <div class="col-md-8 mb-2">
                     <input type="text" id="searchInput" class="form-control" placeholder="Search products...">
@@ -125,14 +91,11 @@
                     </select>
                 </div>
             </div>
-
-            <div class="row g-4" id="productGrid">
-                </div>
-            
+            <div class="row g-4" id="productGrid"></div>
         </div>
     </section>
 
-<div class="modal fade" id="authModal" tabindex="-1">
+    <div class="modal fade" id="authModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -162,21 +125,19 @@
                 <div class="modal-header border-bottom-0 pb-0">
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body pt-0 pb-4 px-4" id="productDetailsBody">
-                    </div>
+                <div class="modal-body pt-0 pb-4 px-4" id="productDetailsBody"></div>
             </div>
         </div>
     </div>
 
-<div class="offcanvas offcanvas-start" tabindex="-1" id="profileOffcanvas">
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="profileOffcanvas">
         <div class="offcanvas-header border-bottom">
             <h5 class="offcanvas-title">My Profile</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body d-flex flex-column">
             <h6 class="mb-3">Order History</h6>
-            <div id="orderHistoryList" class="flex-grow-1 overflow-auto pe-2">
-                </div>
+            <div id="orderHistoryList" class="flex-grow-1 overflow-auto pe-2"></div>
             <div class="mt-auto pt-3 border-top">
                 <button class="btn btn-outline-danger w-100" id="logoutBtn">Logout</button>
             </div>
@@ -198,7 +159,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Credit Card Number</label>
-                            <input type="text" class="form-control" pattern="\d{16}" title="Must be exactly 16 digits" placeholder="1234567812345678" required>
+                            <input type="text" class="form-control" pattern="\d{16}" title="Must be 16 digits" placeholder="16 Digits Required" required>
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
@@ -213,14 +174,14 @@
                         <div class="mb-3">
                             <label class="form-label">Shipping Method</label>
                             <select id="shippingSelect" class="form-select" required>
-                                <option value="5.00">Standard Shipping (3-5 Days) - $5.00</option>
-                                <option value="15.00">Express Shipping (1-2 Days) - $15.00</option>
+                                <option value="5.00">Standard Shipping - $5.00</option>
+                                <option value="15.00">Express Shipping - $15.00</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-success w-100">Pay Now</button>
                     </form>
-                    <div id="checkoutSuccess" class="alert alert-success mt-3 d-none">
-                        <strong>Payment Successful!</strong><br>Your order is being processed.
+                    <div id="checkoutSuccess" class="alert alert-success mt-3 d-none text-center">
+                        <strong>Payment Successful!</strong><br>Check your Profile for order status.
                     </div>
                 </div>
             </div>
@@ -233,441 +194,236 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body d-flex flex-column">
-            <ul id="cartItemsList" class="list-group mb-3 flex-grow-1 overflow-auto">
-                </ul>
+            <ul id="cartItemsList" class="list-group mb-3 flex-grow-1 overflow-auto"></ul>
             <div class="mt-auto border-top pt-3">
                 <div class="d-flex justify-content-between mb-3">
-                    <strong>Total:</strong>
-                    <strong id="cartTotal">$0.00</strong>
+                    <strong>Total:</strong><strong id="cartTotal">$0.00</strong>
                 </div>
-                <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#checkoutModal" data-bs-dismiss="offcanvas">Checkout</button>                <button class="btn btn-link text-danger w-100 mt-2" id="clearCartBtn">Clear Cart</button>
+                <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#checkoutModal" data-bs-dismiss="offcanvas">Checkout</button>
+                <button class="btn btn-link text-danger w-100 mt-2" id="clearCartBtn">Clear Cart</button>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-   // --- Dynamic Data Fetch & Render Flow ---
-// NEW: Cache data globally so we can filter instantly without re-fetching
-let allProducts = [];
+        let allProducts = [];
+        let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
+        let orderHistory = JSON.parse(localStorage.getItem('protoOrders')) || [];
 
         async function requestProducts() {
             try {
                 const response = await fetch('data/json/products.json');
-                if (!response.ok) throw new Error('Network response failed');
+                const products = await response.json();
                 
-                allProducts = await response.json(); 
-                
-                // NEW: Populate the dropdown dynamically based on the fetched data
+                // PHASE 2: Apply Admin Stock Overrides
+                const overrides = JSON.parse(localStorage.getItem('adminProductOverrides')) || {};
+                allProducts = products.map(p => overrides[p.id] ? { ...p, ...overrides[p.id] } : p);
+
                 populateCategories(allProducts);
-                
-                // Render the UI initially with all products
-                renderUI(allProducts); 
-                
+                renderUI(allProducts);
             } catch (error) {
                 console.error("Error fetching catalog:", error);
-                document.getElementById('productGrid').innerHTML = '<p class="text-danger text-center w-100">Failed to load catalog.</p>';
+                document.getElementById('productGrid').innerHTML = '<p class="text-danger text-center w-100 py-5">Failed to load catalog.</p>';
             }
         }
 
-        /**
-         * NEW: populateCategories(products)
-         * Extracts unique categories from the dataset and builds the dropdown options.
-         */
         function populateCategories(products) {
             const select = document.getElementById('categorySelect');
-            
-            // Map gets all categories, Set removes duplicates, spread [...] turns it back to an array
             const uniqueCategories = [...new Set(products.map(item => item.category))];
-            
-            // Loop through unique categories and append them to the dropdown
             uniqueCategories.forEach(category => {
                 select.innerHTML += `<option value="${category}">${category}</option>`;
             });
         }
-        
-function renderUI(products) {
-            const grid = document.getElementById('productGrid');
-            grid.innerHTML = ''; 
-            
-            if (products.length === 0) {
-                grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><h4>No products found matching your criteria.</h4></div>';
-                return; 
-            }
-            
-// Loop through each product object in the data array
-            products.forEach(product => {
-                // Determine if we need to show the urgency badge
-                const stockBadge = product.stock < 5 
-                    ? `<span class="badge bg-danger mb-3 align-self-start">Only ${product.stock} left in stock!</span>` 
-                    : '';
 
-                // DATA FLOW: Data is permanently written into the Browser's visible DOM.
+        function renderUI(products) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            if (products.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><h4>No products match your criteria.</h4></div>';
+                return;
+            }
+            products.forEach(product => {
+                const stockBadge = product.stock < 5 
+                    ? `<span class="badge bg-danger mb-3 align-self-start">Only ${product.stock} left!</span>` 
+                    : '';
                 grid.innerHTML += `
                     <div class="col-md-4 col-sm-6">
-                        <div class="card h-100 shadow-sm">
-                            <img src="${product.imageUrl}" class="card-img-top border-bottom" alt="Image of ${product.name}" style="height: 200px; object-fit: cover;">
+                        <div class="card h-100 shadow-sm border-0">
+                            <img src="${product.imageUrl}" class="card-img-top border-bottom" alt="${product.name}" style="height: 200px; object-fit: cover;">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title mb-1">${product.name}</h5>
-                                <div class="text-warning mb-2">
-                                    &#9733; <span class="text-muted small">${product.rating}</span>
-                                </div>
-                                <h6 class="mb-2">$${product.price.toFixed(2)}</h6>
+                                <h5 class="card-title text-dark mb-1">${product.name}</h5>
+                                <div class="text-warning mb-2">&#9733; <span class="text-muted small">${product.rating}</span></div>
+                                <h6 class="text-dark mb-2">$${product.price.toFixed(2)}</h6>
                                 ${stockBadge}
-                                
                                 <div class="mt-auto d-flex gap-2">
                                     <button class="btn btn-outline-secondary w-50 view-details-btn" data-id="${product.id}">Details</button>
-                                    <button class="btn btn-primary w-50 add-to-cart-btn" 
-                                        data-id="${product.id}" 
-                                        data-name="${product.name}" 
-                                        data-price="${product.price}">Add</button>
+                                    <button class="btn btn-primary w-50 add-to-cart-btn" data-id="${product.id}">Add</button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
         }
-        /**
-         * NEW: filterProducts() - Now includes Sorting logic!
-         * Reads the inputs, filters the cached array, sorts it, and updates the DOM.
-         */
+
         function filterProducts() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const selectedCategory = document.getElementById('categorySelect').value;
-            const sortMethod = document.getElementById('sortSelect').value;
-
-            // 1. FILTER the data first
-            let filteredData = allProducts.filter(product => {
-                const matchesSearch = product.name.toLowerCase().includes(searchTerm);
-                const matchesCategory = selectedCategory === "" || product.category === selectedCategory;
-                return matchesSearch && matchesCategory;
-            });
-
-            // 2. SORT the filtered data
-            if (sortMethod === 'price-asc') {
-                filteredData.sort((a, b) => a.price - b.price);
-            } else if (sortMethod === 'price-desc') {
-                filteredData.sort((a, b) => b.price - a.price);
-            } else if (sortMethod === 'name-asc') {
-                filteredData.sort((a, b) => a.name.localeCompare(b.name));
-            } else if (sortMethod === 'name-desc') {
-                filteredData.sort((a, b) => b.name.localeCompare(a.name));
-            }
-
-            // 3. RENDER the updated DOM
-            renderUI(filteredData);
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categorySelect').value;
+            const sort = document.getElementById('sortSelect').value;
+            let data = allProducts.filter(p => p.name.toLowerCase().includes(search) && (category === "" || p.category === category));
+            if (sort === 'price-asc') data.sort((a, b) => a.price - b.price);
+            else if (sort === 'price-desc') data.sort((a, b) => b.price - a.price);
+            else if (sort === 'name-asc') data.sort((a, b) => a.name.localeCompare(b.name));
+            else if (sort === 'name-desc') data.sort((a, b) => b.name.localeCompare(a.name));
+            renderUI(data);
         }
-
-        // Bind the filter/sort function to all three UI controls
-        document.getElementById('searchInput').addEventListener('input', filterProducts);
-        document.getElementById('categorySelect').addEventListener('change', filterProducts);
-        document.getElementById('sortSelect').addEventListener('change', filterProducts); // New DOM Event
-
-        // --- Shopping Cart Logic ---
- // --- Shopping Cart Logic ---
-        let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
 
         const updateCartUI = () => {
             const list = document.getElementById('cartItemsList');
             const totalEl = document.getElementById('cartTotal');
             const countEl = document.getElementById('cartCount');
-            
             list.innerHTML = '';
-            let total = 0;
-            let count = 0;
-
-            cart.forEach((item) => {
+            let total = 0, count = 0;
+            cart.forEach(item => {
                 total += item.price * item.qty;
                 count += item.qty;
-                // UPDATED: Now includes + and - buttons for advanced cart control
                 list.innerHTML += `
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
                         <div>
                             <h6 class="my-0">${item.name}</h6>
                             <div class="input-group input-group-sm mt-1" style="width: 90px;">
-                                <button class="btn btn-outline-secondary cart-decrease-btn" data-id="${item.id}">-</button>
-                                <input type="text" class="form-control text-center px-0" value="${item.qty}" readonly>
-                                <button class="btn btn-outline-secondary cart-increase-btn" data-id="${item.id}">+</button>
+                                <button class="btn btn-outline-secondary cart-qty-btn" data-id="${item.id}" data-action="dec">-</button>
+                                <input type="text" class="form-control text-center" value="${item.qty}" readonly>
+                                <button class="btn btn-outline-secondary cart-qty-btn" data-id="${item.id}" data-action="inc">+</button>
                             </div>
                         </div>
-                        <span class="text-muted">$${(item.price * item.qty).toFixed(2)}</span>
+                        <span class="text-dark">$${(item.price * item.qty).toFixed(2)}</span>
                     </li>`;
             });
-
             totalEl.innerText = `$${total.toFixed(2)}`;
             countEl.innerText = count;
             localStorage.setItem('protoCart', JSON.stringify(cart));
         };
 
-// --- Product Grid Logic (Handles Details and Main Add to Cart) ---
-        document.getElementById('productGrid').addEventListener('click', (e) => {
+        const handleAddToCart = (id) => {
+            const product = allProducts.find(p => p.id === id);
+            const existing = cart.find(item => item.id === id);
+            if ((existing ? existing.qty : 0) >= product.stock) {
+                alert(`Limit reached. Only ${product.stock} available.`);
+                return;
+            }
+            if (existing) existing.qty++;
+            else cart.push({ id, name: product.name, price: product.price, qty: 1 });
+            updateCartUI();
+        };
+
+        document.getElementById('productGrid').addEventListener('click', e => {
             const id = e.target.dataset.id;
-            
-            // Handle "View Details" click
+            if (e.target.classList.contains('add-to-cart-btn')) handleAddToCart(id);
             if (e.target.classList.contains('view-details-btn')) {
-                const product = allProducts.find(p => p.id === id);
-                if (!product) return;
-
-                const modalBody = document.getElementById('productDetailsBody');
-                const stockStatus = product.stock < 5 
-                    ? `<span class="badge bg-danger mb-2">Only ${product.stock} left in stock!</span>` 
-                    : `<span class="badge bg-success mb-2">In Stock (${product.stock})</span>`;
-
-                modalBody.innerHTML = `
+                const p = allProducts.find(x => x.id === id);
+                document.getElementById('productDetailsBody').innerHTML = `
                     <div class="row g-4 mt-1">
-                        <div class="col-md-6 text-center">
-                            <img src="${product.imageUrl}" class="img-fluid rounded shadow-sm border" alt="${product.name}" style="width: 100%; max-height: 300px; object-fit: cover;">
-                        </div>
+                        <div class="col-md-6"><img src="${p.imageUrl}" class="img-fluid rounded border" alt="${p.name}"></div>
                         <div class="col-md-6 d-flex flex-column">
-                            <div class="align-self-start">${stockStatus}</div>
-                            <h3 class="fw-bold mb-2">${product.name}</h3>
-                            <div class="text-warning mb-3 fs-5">
-                                &#9733; <span class="text-muted small fs-6">${product.rating} / 5.0</span>
-                            </div>
-                            <h4 class="text-success fw-bold mb-3">$${product.price.toFixed(2)}</h4>
-                            <p class="text-muted flex-grow-1">${product.description}</p>
-                            <button class="btn btn-primary btn-lg w-100 mt-auto modal-add-to-cart-btn" 
-                                data-id="${product.id}">Add to Cart - $${product.price.toFixed(2)}</button>
+                            <h3 class="fw-bold text-dark">${p.name}</h3>
+                            <div class="text-warning fs-5 mb-2">&#9733; <span class="text-muted small">${p.rating} / 5.0</span></div>
+                            <h4 class="text-success fw-bold mb-3">$${p.price.toFixed(2)}</h4>
+                            <p class="text-muted flex-grow-1">${p.description}</p>
+                            <button class="btn btn-primary btn-lg w-100 modal-add-to-cart-btn" data-id="${p.id}">Add to Cart</button>
                         </div>
                     </div>`;
-
-                const detailsModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('productDetailsModal'));
-                detailsModal.show();
-            }
-
-            // Handle "Add to Cart" click from the main grid
-            if (e.target.classList.contains('add-to-cart-btn')) {
-                const product = allProducts.find(p => p.id === id);
-                if (!product) return;
-
-                const existingItem = cart.find(item => item.id === id);
-                const currentQty = existingItem ? existingItem.qty : 0;
-
-                if (currentQty >= product.stock) {
-                    alert(`Cannot add more. Only ${product.stock} left in stock!`);
-                    return;
-                }
-
-                if (existingItem) {
-                    existingItem.qty += 1;
-                } else {
-                    cart.push({ id, name: product.name, price: product.price, qty: 1 });
-                }
-                updateCartUI();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('productDetailsModal')).show();
             }
         });
 
-        // --- Modal "Add to Cart" Logic ---
-        document.getElementById('productDetailsBody').addEventListener('click', (e) => {
+        document.getElementById('productDetailsBody').addEventListener('click', e => {
             if (e.target.classList.contains('modal-add-to-cart-btn')) {
-                // Prevent multiple firing and bubbling
-                e.preventDefault();
-                e.stopPropagation(); 
+                e.stopPropagation();
+                handleAddToCart(e.target.dataset.id);
+            }
+        });
 
+        document.getElementById('cartItemsList').addEventListener('click', e => {
+            if (e.target.classList.contains('cart-qty-btn')) {
                 const id = e.target.dataset.id;
-                const product = allProducts.find(p => p.id === id);
-                
-                const existingItem = cart.find(item => item.id === id);
-                const currentQty = existingItem ? existingItem.qty : 0;
-
-                if (currentQty >= product.stock) {
-                    alert(`Cannot add more. Only ${product.stock} left in stock!`);
-                    return;
-                }
-
-                if (existingItem) {
-                    existingItem.qty += 1;
+                const action = e.target.dataset.action;
+                const idx = cart.findIndex(i => i.id === id);
+                if (action === 'inc') {
+                    const stock = allProducts.find(p => p.id === id).stock;
+                    if (cart[idx].qty < stock) cart[idx].qty++;
+                    else alert("Out of stock.");
                 } else {
-                    cart.push({ id, name: product.name, price: product.price, qty: 1 });
-                }
-                updateCartUI();
-                
-                const btn = e.target;
-                const originalText = btn.innerText;
-                btn.classList.replace('btn-primary', 'btn-success');
-                btn.innerText = '✓ Added to Cart';
-                setTimeout(() => {
-                    btn.classList.replace('btn-success', 'btn-primary');
-                    btn.innerText = originalText;
-                }, 1000);
-            }
-        });
-
-        // --- Offcanvas Cart +/- Button Logic ---
-        document.getElementById('cartItemsList').addEventListener('click', (e) => {
-            const id = e.target.dataset.id;
-            const existingItemIndex = cart.findIndex(item => item.id === id);
-            
-            if (existingItemIndex === -1) return;
-
-            if (e.target.classList.contains('cart-increase-btn')) {
-                // Stock Enforcement on the + button
-                const product = allProducts.find(p => p.id === id);
-                if (cart[existingItemIndex].qty >= product.stock) {
-                    alert(`Cannot add more. Only ${product.stock} left in stock!`);
-                } else {
-                    cart[existingItemIndex].qty += 1;
-                    updateCartUI();
-                }
-            } else if (e.target.classList.contains('cart-decrease-btn')) {
-                // Remove at 1, otherwise decrease
-                if (cart[existingItemIndex].qty > 1) {
-                    cart[existingItemIndex].qty -= 1;
-                } else {
-                    cart.splice(existingItemIndex, 1); // Completely removes the item
+                    if (cart[idx].qty > 1) cart[idx].qty--;
+                    else cart.splice(idx, 1);
                 }
                 updateCartUI();
             }
         });
-
-        // Clear cart
-        document.getElementById('clearCartBtn').addEventListener('click', () => {
-            cart = [];
-            updateCartUI();
-        });
-
-        // --- Order History & Auth Logic ---
-        let orderHistory = JSON.parse(localStorage.getItem('protoOrders')) || [];
 
         const checkLoginState = () => {
             const btn = document.getElementById('authBtn');
-            if (localStorage.getItem('isLoggedIn') === 'true') {
-                btn.innerText = 'My Profile';
-                btn.dataset.bsTarget = '#profileOffcanvas';
-                btn.dataset.bsToggle = 'offcanvas';
-            } else {
-                btn.innerText = 'Login / Register';
-                btn.dataset.bsTarget = '#authModal';
-                btn.dataset.bsToggle = 'modal';
-            }
+            const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            btn.innerText = loggedIn ? 'My Profile' : 'Login / Register';
+            btn.dataset.bsTarget = loggedIn ? '#profileOffcanvas' : '#authModal';
+            btn.dataset.bsToggle = loggedIn ? 'offcanvas' : 'modal';
         };
 
-        // NEW: Logout Logic
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.setItem('isLoggedIn', 'false');
-            checkLoginState(); // Instantly update the Navbar button
+            checkLoginState();
             bootstrap.Offcanvas.getInstance(document.getElementById('profileOffcanvas')).hide();
         });
 
-        const updateOrderHistoryUI = () => {
-            const list = document.getElementById('orderHistoryList');
-            list.innerHTML = '';
-            
-            if (orderHistory.length === 0) {
-                list.innerHTML = '<p class="text-muted text-center mt-4">No past orders.</p>';
-                return;
-            }
-
-            // Reverse order so newest is at the top
-            [...orderHistory].reverse().forEach((order, index) => {
-                // Safely get items (fallbacks for old dummy data)
-                const items = order.items || [];
-                let itemsHtml = items.map(i => `
-                    <div class="d-flex justify-content-between small text-muted">
-                        <span>${i.qty}x ${i.name}</span>
-                        <span>$${(i.price * i.qty).toFixed(2)}</span>
-                    </div>
-                `).join('');
-
-                // Mock Delivery Tracker Math
-                const progressPercent = (order.statusStep / 3) * 100;
-
-                list.innerHTML += `
-                    <div class="card mb-3 shadow-sm border-0 bg-white">
-                        <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-                            <strong class="text-dark">${order.date}</strong>
-                            <span class="badge bg-primary">${order.statusText}</span>
-                        </div>
-                        <div class="card-body py-2">
-                            ${itemsHtml || '<small class="text-muted">Legacy Order (No item data)</small>'}
-                            <hr class="my-2">
-                            <div class="d-flex justify-content-between fw-bold text-dark">
-                                <span>Total (inc. Shipping)</span>
-                                <span>$${order.total}</span>
-                            </div>
-                            
-                            <div class="mt-4 mb-2">
-                                <div class="progress" style="height: 6px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
-                                         role="progressbar" style="width: ${progressPercent}%;"></div>
-                                </div>
-                                <div class="d-flex justify-content-between mt-1 text-muted" style="font-size: 0.7rem;">
-                                    <span>Placed</span>
-                                    <span>Packed</span>
-                                    <span>Shipped</span>
-                                    <span>Delivered</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-        };
-
-        document.getElementById('authForm').addEventListener('submit', (e) => {
+        document.getElementById('authForm').addEventListener('submit', e => {
             e.preventDefault();
-            const user = document.getElementById('authUsername').value;
-            const pass = document.getElementById('authPassword').value;
-
-            if (user === 'admin' && pass === 'admin123') {
-                window.location.href = 'admin.html';
-            } else {
+            const u = document.getElementById('authUsername').value, p = document.getElementById('authPassword').value;
+            if (u === 'admin' && p === 'admin123') window.location.href = 'admin.html';
+            else {
                 localStorage.setItem('isLoggedIn', 'true');
                 checkLoginState();
                 bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
             }
         });
 
-        // --- Simulated Checkout Flow Logic ---
-        document.getElementById('checkoutForm').addEventListener('submit', (e) => {
-            e.preventDefault(); 
-            
-            // 1. Prevent checking out an empty cart!
-            if (cart.length === 0) {
-                alert("Your cart is empty! Please add products before checking out.");
-                return;
-            }
-
-            // 2. Calculate final total
-            const shippingCost = parseFloat(document.getElementById('shippingSelect').value);
-            const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            const finalTotal = (cartTotal + shippingCost).toFixed(2);
-
-            // 3. Generate Mock Status (random step between 1 and 3 to simulate active delivery)
-            const mockStatuses = ["Placed", "Packed", "Shipped", "Delivered"];
+        document.getElementById('checkoutForm').addEventListener('submit', e => {
+            e.preventDefault();
+            if (cart.length === 0) return alert("Cart is empty.");
+            const ship = parseFloat(document.getElementById('shippingSelect').value);
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0) + ship;
             const step = Math.floor(Math.random() * 3) + 1;
-
-            // 4. Save entire cart array to Order History
-            orderHistory.push({
-                date: new Date().toLocaleDateString(),
-                total: finalTotal,
-                items: [...cart], // We are now saving the exact items!
-                statusStep: step,
-                statusText: mockStatuses[step]
-            });
+            orderHistory.push({ date: new Date().toLocaleDateString(), total: total.toFixed(2), items: [...cart], statusStep: step, statusText: ["Placed", "Packed", "Shipped", "Delivered"][step] });
             localStorage.setItem('protoOrders', JSON.stringify(orderHistory));
             updateOrderHistoryUI();
-
-            e.target.classList.add('d-none'); 
+            e.target.classList.add('d-none');
             document.getElementById('checkoutSuccess').classList.remove('d-none');
-            
-            cart = [];
-            updateCartUI();
+            cart = []; updateCartUI();
         });
 
-        // Reset the Checkout UI
-        document.getElementById('checkoutModal').addEventListener('show.bs.modal', () => {
-            const form = document.getElementById('checkoutForm');
-            form.classList.remove('d-none');
-            form.reset(); 
-            document.getElementById('checkoutSuccess').classList.add('d-none');
-        });
-        // Initialize UI on load
-        updateCartUI();
-        checkLoginState();
-        updateOrderHistoryUI();
-        requestProducts();
+        const updateOrderHistoryUI = () => {
+            const list = document.getElementById('orderHistoryList');
+            list.innerHTML = orderHistory.length ? '' : '<p class="text-muted text-center mt-4">No orders yet.</p>';
+            [...orderHistory].reverse().forEach(o => {
+                const itemsHtml = (o.items || []).map(i => `<div class="d-flex justify-content-between small text-muted"><span>${i.qty}x ${i.name}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`).join('');
+                list.innerHTML += `
+                    <div class="card mb-3 shadow-sm border-0 bg-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2"><strong class="text-dark">${o.date}</strong><span class="badge bg-primary">${o.statusText}</span></div>
+                            ${itemsHtml}
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between fw-bold text-dark"><span>Total</span><span>$${o.total}</span></div>
+                            <div class="mt-3"><div class="progress" style="height: 6px;"><div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: ${(o.statusStep/3)*100}%;"></div></div><div class="d-flex justify-content-between mt-1 text-muted" style="font-size: 0.6rem;"><span>Placed</span><span>Packed</span><span>Shipped</span><span>Delivered</span></div></div>
+                        </div>
+                    </div>`;
+            });
+        };
+
+        ['searchInput', 'categorySelect', 'sortSelect'].forEach(id => document.getElementById(id).addEventListener('change', filterProducts));
+        document.getElementById('searchInput').addEventListener('input', filterProducts);
+        document.getElementById('clearCartBtn').addEventListener('click', () => { cart = []; updateCartUI(); });
+        document.getElementById('checkoutModal').addEventListener('show.bs.modal', () => { const f = document.getElementById('checkoutForm'); f.classList.remove('d-none'); f.reset(); document.getElementById('checkoutSuccess').classList.add('d-none'); });
+
+        updateCartUI(); checkLoginState(); updateOrderHistoryUI(); requestProducts();
     </script>
 </body>
 </html>
