@@ -67,6 +67,11 @@
             box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.5);
             border-color: rgba(255, 255, 255, 0.8);
         }
+
+        /* Product Details Modal 1-second Fade-In */
+        #productDetailsModal.fade {
+            transition: opacity 1s ease-in-out;
+        }
     </style>
 </head>
 <body>
@@ -443,6 +448,9 @@ function renderUI(products) {
         // --- Modal "Add to Cart" Logic ---
         document.getElementById('productDetailsBody').addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-add-to-cart-btn')) {
+                // FIX: Stop the click from "bubbling up" to the product grid in the background
+                e.stopPropagation(); 
+
                 const id = e.target.dataset.id;
                 const product = allProducts.find(p => p.id === id);
                 
@@ -461,7 +469,7 @@ function renderUI(products) {
                 }
                 updateCartUI();
                 
-                // Visual feedback: briefly change button text
+                // Visual feedback logic...
                 const btn = e.target;
                 const originalText = btn.innerText;
                 btn.classList.replace('btn-primary', 'btn-success');
@@ -471,7 +479,7 @@ function renderUI(products) {
                     btn.innerText = originalText;
                 }, 1000);
             }
-        });  
+        });
             if (e.target.classList.contains('add-to-cart-btn')) {
                 const id = e.target.dataset.id;
                 
