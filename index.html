@@ -44,6 +44,18 @@
 <section id="products" class="py-5">
         <div class="container">
             <h2 class="text-center mb-5">Our Products</h2>
+            
+            <div class="row mb-4">
+                <div class="col-md-8 mb-2">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search products instantly...">
+                </div>
+                    <div class="col-md-4 mb-2">
+                    <select id="categorySelect" class="form-select">
+                        <option value="">All Categories</option>
+                        </select>
+                </div>
+            </div>
+
             <div class="row g-4" id="productGrid">
                 </div>
         </div>
@@ -102,46 +114,44 @@
     
     <script>
    // --- Dynamic Data Fetch & Render Flow ---
+// NEW: Cache data globally so we can filter instantly without re-fetching
+let allProducts = [];
 
-        /**
-         * Step 1: requestProducts()
-         * This function initiates the data flow. It acts as the controller that
-         * asks the server for data and then passes that data to the UI renderer.
-         */
         async function requestProducts() {
             try {
-                // Step 2: fetch(path-to-json-file)
-                // We send an asynchronous HTTP GET request to the Server to retrieve the JSON file.
-                // The 'await' keyword pauses this function's execution until the Server responds.
-                // DATA FLOW: Request goes OUT to the network.
                 const response = await fetch('data/json/products.json');
-                
-                // Check if the server returned a success status (e.g., 200 OK)
                 if (!response.ok) throw new Error('Network response failed');
                 
-                // Step 3: return JSON
-                // The response body is parsed from a raw JSON text string into a usable JavaScript Array.
-                // DATA FLOW: Data comes IN from the network and is converted into a JS object.
-                const productsData = await response.json();
+                allProducts = await response.json(); 
                 
-                // Step 4: renderUI()
-                // We pass the parsed data array down to the rendering function.
-                // DATA FLOW: Data moves from the JavaScript logic layer into the DOM rendering layer.
-                renderUI(productsData);
+                // NEW: Populate the dropdown dynamically based on the fetched data
+                populateCategories(allProducts);
+                
+                // Render the UI initially with all products
+                renderUI(allProducts); 
                 
             } catch (error) {
-                // If anything fails in the network request, catch it and show an error in the UI.
                 console.error("Error fetching catalog:", error);
                 document.getElementById('productGrid').innerHTML = '<p class="text-danger text-center w-100">Failed to load catalog.</p>';
             }
         }
 
         /**
-         * Step 5: renderUI(products)
-         * This function receives the data array and is strictly responsible for 
-         * generating HTML and updating the Browser's DOM. 
-         * It does not know or care where the data came from.
+         * NEW: populateCategories(products)
+         * Extracts unique categories from the dataset and builds the dropdown options.
          */
+        function populateCategories(products) {
+            const select = document.getElementById('categorySelect');
+            
+            // Map gets all categories, Set removes duplicates, spread [...] turns it back to an array
+            const uniqueCategories = [...new Set(products.map(item => item.category))];
+            
+            // Loop through unique categories and append them to the dropdown
+            uniqueCategories.forEach(category => {
+                select.innerHTML += `<option value="${category}">${category}</option>`;
+            });
+        }
+        
 function renderUI(products) {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = ''; // Clear any loading states or old content
@@ -167,6 +177,32 @@ function renderUI(products) {
                 `;
             });
         }
+
+        /**
+         * NEW: filterProducts()
+         * Reads the inputs, filters the cached allProducts array, and passes the 
+         * result back to renderUI().
+         */
+        function filterProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedCategory = document.getElementById('categorySelect').value;
+
+            const filteredData = allProducts.filter(product => {
+                // Check if name matches search (if empty, includes('') is always true)
+                const matchesSearch = product.name.toLowerCase().includes(searchTerm);
+                // Check if category matches dropdown (if value is "", show all)
+                const matchesCategory = selectedCategory === "" || product.category === selectedCategory;
+                
+                return matchesSearch && matchesCategory;
+            });
+
+            renderUI(filteredData);
+        }
+
+        // Bind the filter function to the input (triggers on every keystroke) and select (triggers on change)
+        document.getElementById('searchInput').addEventListener('input', filterProducts);
+        document.getElementById('categorySelect').addEventListener('change', filterProducts);
+
         // --- Shopping Cart Logic ---
         let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
 
