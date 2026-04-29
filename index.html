@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive E-Commerce Prototype</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; }
+        .hero-section { background-color: #f8f9fa; padding: 80px 0; }
+        .product-img-placeholder { height: 200px; background-color: #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">StoreBrand</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#products">Products</a></li>
+                </ul>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#registerModal">Register</button>
+                    <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+                        Cart <span id="cartCount" class="badge bg-light text-dark ms-1">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header id="home" class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4">Welcome to Our Store</h1>
+            <p class="lead text-muted">Interactive prototype with functional cart and registration.</p>
+        </div>
+    </header>
+    
+<section id="products" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Our Products</h2>
+            <div class="row g-4" id="productGrid">
+                </div>
+        </div>
+    </section>
+
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registrationForm">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email address</label>
+                            <input type="email" class="form-control" required>
+                            <div class="form-text">We'll check if this exists in the "DB".</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" minlength="6" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                    </form>
+                    <div id="regSuccess" class="alert alert-success mt-3 d-none">Registration successful! Verification email sent.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title">Your Cart</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <ul id="cartItemsList" class="list-group mb-3 flex-grow-1 overflow-auto">
+                </ul>
+            <div class="mt-auto border-top pt-3">
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Total:</strong>
+                    <strong id="cartTotal">$0.00</strong>
+                </div>
+                <button class="btn btn-success w-100" onclick="alert('Proceeding to Checkout UI...')">Checkout</button>
+                <button class="btn btn-link text-danger w-100 mt-2" id="clearCartBtn">Clear Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+   // --- Dynamic Data Fetch & Render Flow ---
+
+        /**
+         * Step 1: requestProducts()
+         * This function initiates the data flow. It acts as the controller that
+         * asks the server for data and then passes that data to the UI renderer.
+         */
+        async function requestProducts() {
+            try {
+                // Step 2: fetch(path-to-json-file)
+                // We send an asynchronous HTTP GET request to the Server to retrieve the JSON file.
+                // The 'await' keyword pauses this function's execution until the Server responds.
+                // DATA FLOW: Request goes OUT to the network.
+                const response = await fetch('data/json/products.json');
+                
+                // Check if the server returned a success status (e.g., 200 OK)
+                if (!response.ok) throw new Error('Network response failed');
+                
+                // Step 3: return JSON
+                // The response body is parsed from a raw JSON text string into a usable JavaScript Array.
+                // DATA FLOW: Data comes IN from the network and is converted into a JS object.
+                const productsData = await response.json();
+                
+                // Step 4: renderUI()
+                // We pass the parsed data array down to the rendering function.
+                // DATA FLOW: Data moves from the JavaScript logic layer into the DOM rendering layer.
+                renderUI(productsData);
+                
+            } catch (error) {
+                // If anything fails in the network request, catch it and show an error in the UI.
+                console.error("Error fetching catalog:", error);
+                document.getElementById('productGrid').innerHTML = '<p class="text-danger text-center w-100">Failed to load catalog.</p>';
+            }
+        }
+
+        /**
+         * Step 5: renderUI(products)
+         * This function receives the data array and is strictly responsible for 
+         * generating HTML and updating the Browser's DOM. 
+         * It does not know or care where the data came from.
+         */
+function renderUI(products) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = ''; // Clear any loading states or old content
+            
+            // Loop through each product object in the data array
+            products.forEach(product => {
+                // DATA FLOW: Data is permanently written into the Browser's visible DOM.
+                // UPDATED: Now uses an <img> tag with dynamic src and alt attributes.
+                grid.innerHTML += `
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card h-100 shadow-sm">
+                            <img src="${product.imageUrl}" class="card-img-top border-bottom" alt="Image of ${product.name}" style="height: 200px; object-fit: cover;">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">${product.name}</h5>
+                                <h6 class="mb-3">$${product.price.toFixed(2)}</h6>
+                                <button class="btn btn-outline-primary mt-auto add-to-cart-btn" 
+                                    data-id="${product.id}" 
+                                    data-name="${product.name}" 
+                                    data-price="${product.price}">Add to Cart</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        // --- Shopping Cart Logic ---
+        let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
+
+        const updateCartUI = () => {
+            const list = document.getElementById('cartItemsList');
+            const totalEl = document.getElementById('cartTotal');
+            const countEl = document.getElementById('cartCount');
+            
+            list.innerHTML = '';
+            let total = 0;
+            let count = 0;
+
+            cart.forEach((item, index) => {
+                total += item.price * item.qty;
+                count += item.qty;
+                list.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="my-0">${item.name}</h6>
+                            <small class="text-muted">Qty: ${item.qty}</small>
+                        </div>
+                        <span class="text-muted">$${(item.price * item.qty).toFixed(2)}</span>
+                    </li>`;
+            });
+
+            totalEl.innerText = `$${total.toFixed(2)}`;
+            countEl.innerText = count;
+            localStorage.setItem('protoCart', JSON.stringify(cart));
+        };
+
+// Add to cart click event (Event Delegation for dynamic HTML)
+        document.getElementById('productGrid').addEventListener('click', (e) => {
+            if (e.target.classList.contains('add-to-cart-btn')) {
+                const id = e.target.dataset.id;
+                const name = e.target.dataset.name;
+                const price = parseFloat(e.target.dataset.price);
+
+                const existingItem = cart.find(item => item.id === id);
+                if (existingItem) {
+                    existingItem.qty += 1;
+                } else {
+                    cart.push({ id, name, price, qty: 1 });
+                }
+                updateCartUI();
+            }
+        });
+
+        // Clear cart
+        document.getElementById('clearCartBtn').addEventListener('click', () => {
+            cart = [];
+            updateCartUI();
+        });
+
+        // --- Registration Flow Logic ---
+        document.getElementById('registrationForm').addEventListener('submit', (e) => {
+            e.preventDefault(); // Stop page reload
+            // Mimic successful DB save and email send from Activity Diagram
+            e.target.classList.add('d-none'); 
+            document.getElementById('regSuccess').classList.remove('d-none');
+        });
+
+        // Initialize UI on load
+        updateCartUI();
+        
+        // Trigger the sequence diagram flow when the script loads
+        requestProducts();
+    </script>
+</body>
+</html>
