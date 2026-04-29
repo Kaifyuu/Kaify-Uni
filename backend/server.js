@@ -6,13 +6,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Cloud-Ready MySQL Connection
+// Cloud-Ready MySQL Connection (Now with SSL bypass for Aiven!)
 const db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '', 
     database: process.env.DB_NAME || 'ecommerce_db',
-    port: process.env.DB_PORT || 3306
+    port: process.env.DB_PORT || 3306,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 db.connect(err => {
