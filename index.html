@@ -159,6 +159,43 @@
         </div>
     </div>
 
+    <div class="modal fade" id="checkoutModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Secure Checkout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="checkoutForm">
+                        <div class="mb-3">
+                            <label class="form-label">Shipping Address</label>
+                            <textarea class="form-control" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Credit Card Number</label>
+                            <input type="text" class="form-control" pattern="\d{16}" title="Must be exactly 16 digits" placeholder="1234567812345678" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Expiry</label>
+                                <input type="text" class="form-control" placeholder="MM/YY" required>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">CVV</label>
+                                <input type="text" class="form-control" pattern="\d{3,4}" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Pay Now</button>
+                    </form>
+                    <div id="checkoutSuccess" class="alert alert-success mt-3 d-none">
+                        <strong>Payment Successful!</strong><br>Your order is being processed.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas">
         <div class="offcanvas-header border-bottom">
             <h5 class="offcanvas-title">Your Cart</h5>
@@ -172,8 +209,7 @@
                     <strong>Total:</strong>
                     <strong id="cartTotal">$0.00</strong>
                 </div>
-                <button class="btn btn-success w-100" onclick="alert('Proceeding to Checkout UI...')">Checkout</button>
-                <button class="btn btn-link text-danger w-100 mt-2" id="clearCartBtn">Clear Cart</button>
+                <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#checkoutModal" data-bs-dismiss="offcanvas">Checkout</button>                <button class="btn btn-link text-danger w-100 mt-2" id="clearCartBtn">Clear Cart</button>
             </div>
         </div>
     </div>
@@ -222,24 +258,29 @@ let allProducts = [];
         
 function renderUI(products) {
             const grid = document.getElementById('productGrid');
-            grid.innerHTML = ''; // Clear any loading states or old content
+            grid.innerHTML = ''; 
             
-            // RESTORED: Handle "No Results" consideration
             if (products.length === 0) {
                 grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><h4>No products found matching your criteria.</h4></div>';
-                return; // Stop running the rest of the function
+                return; 
             }
             
-            // Loop through each product object in the data array
             products.forEach(product => {
-                // DATA FLOW: Data is permanently written into the Browser's visible DOM.
-                // UPDATED: Now uses an <img> tag with dynamic src and alt attributes.
+                // Determine if we need to show the urgency badge
+                const stockBadge = product.stock < 5 
+                    ? `<span class="badge bg-danger mb-2 align-self-start">Only ${product.stock} left in stock!</span>` 
+                    : '';
+
                 grid.innerHTML += `
                     <div class="col-md-4 col-sm-6">
                         <div class="card h-100 shadow-sm">
                             <img src="${product.imageUrl}" class="card-img-top border-bottom" alt="Image of ${product.name}" style="height: 200px; object-fit: cover;">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">${product.name}</h5>
+                                ${stockBadge}
+                                <h5 class="card-title mb-1">${product.name}</h5>
+                                <div class="text-warning mb-2">
+                                    &#9733; <span class="text-muted small">${product.rating}</span>
+                                </div>
                                 <h6 class="mb-3">$${product.price.toFixed(2)}</h6>
                                 <button class="btn btn-outline-primary mt-auto add-to-cart-btn" 
                                     data-id="${product.id}" 
@@ -289,6 +330,7 @@ function renderUI(products) {
         document.getElementById('sortSelect').addEventListener('change', filterProducts); // New DOM Event
 
         // --- Shopping Cart Logic ---
+ // --- Shopping Cart Logic ---
         let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
 
         const updateCartUI = () => {
@@ -300,14 +342,19 @@ function renderUI(products) {
             let total = 0;
             let count = 0;
 
-            cart.forEach((item, index) => {
+            cart.forEach((item) => {
                 total += item.price * item.qty;
                 count += item.qty;
+                // UPDATED: Now includes + and - buttons for advanced cart control
                 list.innerHTML += `
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="my-0">${item.name}</h6>
-                            <small class="text-muted">Qty: ${item.qty}</small>
+                            <div class="input-group input-group-sm mt-1" style="width: 90px;">
+                                <button class="btn btn-outline-secondary cart-decrease-btn" data-id="${item.id}">-</button>
+                                <input type="text" class="form-control text-center px-0" value="${item.qty}" readonly>
+                                <button class="btn btn-outline-secondary cart-increase-btn" data-id="${item.id}">+</button>
+                            </div>
                         </div>
                         <span class="text-muted">$${(item.price * item.qty).toFixed(2)}</span>
                     </li>`;
@@ -318,18 +365,57 @@ function renderUI(products) {
             localStorage.setItem('protoCart', JSON.stringify(cart));
         };
 
-// Add to cart click event (Event Delegation for dynamic HTML)
+        // --- Main Grid "Add to Cart" Logic (With Stock Enforcement) ---
         document.getElementById('productGrid').addEventListener('click', (e) => {
             if (e.target.classList.contains('add-to-cart-btn')) {
                 const id = e.target.dataset.id;
-                const name = e.target.dataset.name;
-                const price = parseFloat(e.target.dataset.price);
+                
+                // 1. Find the product in the master array to check stock
+                const product = allProducts.find(p => p.id === id);
+                if (!product) return;
 
+                // 2. Check how many are currently in the cart
                 const existingItem = cart.find(item => item.id === id);
+                const currentQty = existingItem ? existingItem.qty : 0;
+
+                // 3. Block if adding 1 more exceeds stock
+                if (currentQty >= product.stock) {
+                    alert(`Cannot add more. Only ${product.stock} left in stock!`);
+                    return;
+                }
+
+                // 4. Add or increment
                 if (existingItem) {
                     existingItem.qty += 1;
                 } else {
-                    cart.push({ id, name, price, qty: 1 });
+                    cart.push({ id, name: product.name, price: product.price, qty: 1 });
+                }
+                updateCartUI();
+            }
+        });
+
+        // --- Offcanvas Cart +/- Button Logic ---
+        document.getElementById('cartItemsList').addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            const existingItemIndex = cart.findIndex(item => item.id === id);
+            
+            if (existingItemIndex === -1) return;
+
+            if (e.target.classList.contains('cart-increase-btn')) {
+                // Stock Enforcement on the + button
+                const product = allProducts.find(p => p.id === id);
+                if (cart[existingItemIndex].qty >= product.stock) {
+                    alert(`Cannot add more. Only ${product.stock} left in stock!`);
+                } else {
+                    cart[existingItemIndex].qty += 1;
+                    updateCartUI();
+                }
+            } else if (e.target.classList.contains('cart-decrease-btn')) {
+                // Remove at 1, otherwise decrease
+                if (cart[existingItemIndex].qty > 1) {
+                    cart[existingItemIndex].qty -= 1;
+                } else {
+                    cart.splice(existingItemIndex, 1); // Completely removes the item
                 }
                 updateCartUI();
             }
@@ -339,6 +425,25 @@ function renderUI(products) {
         document.getElementById('clearCartBtn').addEventListener('click', () => {
             cart = [];
             updateCartUI();
+        });
+
+        // --- Simulated Checkout Flow Logic ---
+        document.getElementById('checkoutForm').addEventListener('submit', (e) => {
+            e.preventDefault(); 
+            // 1. Hide form, show success
+            e.target.classList.add('d-none'); 
+            document.getElementById('checkoutSuccess').classList.remove('d-none');
+            // 2. Clear the cart data automatically upon purchase
+            cart = [];
+            updateCartUI();
+        });
+
+        // Reset the Checkout UI every time the modal is opened
+        document.getElementById('checkoutModal').addEventListener('show.bs.modal', () => {
+            const form = document.getElementById('checkoutForm');
+            form.classList.remove('d-none');
+            form.reset(); // Clear old inputs
+            document.getElementById('checkoutSuccess').classList.add('d-none');
         });
 
         // --- Registration Flow Logic ---
