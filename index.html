@@ -434,8 +434,8 @@ function renderUI(products) {
                     </div>
                 `;
 
-                // Initialize and show the Bootstrap modal
-                const detailsModal = new bootstrap.Modal(document.getElementById('productDetailsModal'));
+                // Safely grab the existing modal instance instead of spawning a duplicate
+                const detailsModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('productDetailsModal'));
                 detailsModal.show();
             }
         });
