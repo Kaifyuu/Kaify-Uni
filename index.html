@@ -444,23 +444,6 @@ function renderUI(products) {
             updateCartUI();
         });
 
-// --- Simulated Checkout Flow Logic ---
-        document.getElementById('checkoutForm').addEventListener('submit', (e) => {
-            e.preventDefault(); 
-            
-            // 1. Prevent checking out an empty cart!
-            if (cart.length === 0) {
-                alert("Your cart is empty! Please add products before checking out.");
-                return;
-            }
-            
-        // Reset the Checkout UI every time the modal is opened
-        document.getElementById('checkoutModal').addEventListener('show.bs.modal', () => {
-            const form = document.getElementById('checkoutForm');
-            form.classList.remove('d-none');
-            form.reset(); // Clear old inputs
-            document.getElementById('checkoutSuccess').classList.add('d-none');
-        });
         // --- Order History & Auth Logic ---
         let orderHistory = JSON.parse(localStorage.getItem('protoOrders')) || [];
 
