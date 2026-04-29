@@ -67,10 +67,8 @@
             box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.5);
             border-color: rgba(255, 255, 255, 0.8);
         }
-
-        /* Product Details Modal 1-second Fade-In */
-        #productDetailsModal.fade {
-            transition: opacity 1s ease-in-out;
+           .modal-open {
+            scroll-behavior: auto !important;
         }
     </style>
 </head>
@@ -403,18 +401,16 @@ function renderUI(products) {
             localStorage.setItem('protoCart', JSON.stringify(cart));
         };
 
-        // --- Main Grid "Add to Cart" Logic (With Stock Enforcement) ---
+// --- Product Grid Logic (Handles Details and Main Add to Cart) ---
         document.getElementById('productGrid').addEventListener('click', (e) => {
-          // --- View Details Modal Logic ---
-        document.getElementById('productGrid').addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            
+            // Handle "View Details" click
             if (e.target.classList.contains('view-details-btn')) {
-                const id = e.target.dataset.id;
                 const product = allProducts.find(p => p.id === id);
                 if (!product) return;
 
                 const modalBody = document.getElementById('productDetailsBody');
-                
-                // Add a green "In Stock" badge if stock is healthy, otherwise use the red urgency badge
                 const stockStatus = product.stock < 5 
                     ? `<span class="badge bg-danger mb-2">Only ${product.stock} left in stock!</span>` 
                     : `<span class="badge bg-success mb-2">In Stock (${product.stock})</span>`;
@@ -432,19 +428,73 @@ function renderUI(products) {
                             </div>
                             <h4 class="text-success fw-bold mb-3">$${product.price.toFixed(2)}</h4>
                             <p class="text-muted flex-grow-1">${product.description}</p>
-                            
                             <button class="btn btn-primary btn-lg w-100 mt-auto modal-add-to-cart-btn" 
                                 data-id="${product.id}">Add to Cart - $${product.price.toFixed(2)}</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
 
-                // Safely grab the existing modal instance instead of spawning a duplicate
                 const detailsModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('productDetailsModal'));
                 detailsModal.show();
             }
+
+            // Handle "Add to Cart" click from the main grid
+            if (e.target.classList.contains('add-to-cart-btn')) {
+                const product = allProducts.find(p => p.id === id);
+                if (!product) return;
+
+                const existingItem = cart.find(item => item.id === id);
+                const currentQty = existingItem ? existingItem.qty : 0;
+
+                if (currentQty >= product.stock) {
+                    alert(`Cannot add more. Only ${product.stock} left in stock!`);
+                    return;
+                }
+
+                if (existingItem) {
+                    existingItem.qty += 1;
+                } else {
+                    cart.push({ id, name: product.name, price: product.price, qty: 1 });
+                }
+                updateCartUI();
+            }
         });
 
+        // --- Modal "Add to Cart" Logic ---
+        document.getElementById('productDetailsBody').addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-add-to-cart-btn')) {
+                // Prevent multiple firing and bubbling
+                e.preventDefault();
+                e.stopPropagation(); 
+
+                const id = e.target.dataset.id;
+                const product = allProducts.find(p => p.id === id);
+                
+                const existingItem = cart.find(item => item.id === id);
+                const currentQty = existingItem ? existingItem.qty : 0;
+
+                if (currentQty >= product.stock) {
+                    alert(`Cannot add more. Only ${product.stock} left in stock!`);
+                    return;
+                }
+
+                if (existingItem) {
+                    existingItem.qty += 1;
+                } else {
+                    cart.push({ id, name: product.name, price: product.price, qty: 1 });
+                }
+                updateCartUI();
+                
+                const btn = e.target;
+                const originalText = btn.innerText;
+                btn.classList.replace('btn-primary', 'btn-success');
+                btn.innerText = '✓ Added to Cart';
+                setTimeout(() => {
+                    btn.classList.replace('btn-success', 'btn-primary');
+                    btn.innerText = originalText;
+                }, 1000);
+            }
+        });
+        
         // --- Modal "Add to Cart" Logic ---
         document.getElementById('productDetailsBody').addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-add-to-cart-btn')) {
