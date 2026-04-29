@@ -45,14 +45,23 @@
         <div class="container">
             <h2 class="text-center mb-5">Our Products</h2>
             
-            <div class="row mb-4">
-                <div class="col-md-8 mb-2">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Search products instantly...">
+<div class="row mb-4">
+                <div class="col-md-4 mb-2">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search products...">
                 </div>
-                    <div class="col-md-4 mb-2">
+                <div class="col-md-4 mb-2">
                     <select id="categorySelect" class="form-select">
                         <option value="">All Categories</option>
                         </select>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <select id="sortSelect" class="form-select">
+                        <option value="default">Default Sort</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                        <option value="name-asc">Name: A to Z</option>
+                        <option value="name-desc">Name: Z to A</option>
+                    </select>
                 </div>
             </div>
 
@@ -179,29 +188,40 @@ function renderUI(products) {
         }
 
         /**
-         * NEW: filterProducts()
-         * Reads the inputs, filters the cached allProducts array, and passes the 
-         * result back to renderUI().
+         * NEW: filterProducts() - Now includes Sorting logic!
+         * Reads the inputs, filters the cached array, sorts it, and updates the DOM.
          */
         function filterProducts() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedCategory = document.getElementById('categorySelect').value;
+            const sortMethod = document.getElementById('sortSelect').value;
 
-            const filteredData = allProducts.filter(product => {
-                // Check if name matches search (if empty, includes('') is always true)
+            // 1. FILTER the data first
+            let filteredData = allProducts.filter(product => {
                 const matchesSearch = product.name.toLowerCase().includes(searchTerm);
-                // Check if category matches dropdown (if value is "", show all)
                 const matchesCategory = selectedCategory === "" || product.category === selectedCategory;
-                
                 return matchesSearch && matchesCategory;
             });
 
+            // 2. SORT the filtered data
+            if (sortMethod === 'price-asc') {
+                filteredData.sort((a, b) => a.price - b.price);
+            } else if (sortMethod === 'price-desc') {
+                filteredData.sort((a, b) => b.price - a.price);
+            } else if (sortMethod === 'name-asc') {
+                filteredData.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortMethod === 'name-desc') {
+                filteredData.sort((a, b) => b.name.localeCompare(a.name));
+            }
+
+            // 3. RENDER the updated DOM
             renderUI(filteredData);
         }
 
-        // Bind the filter function to the input (triggers on every keystroke) and select (triggers on change)
+        // Bind the filter/sort function to all three UI controls
         document.getElementById('searchInput').addEventListener('input', filterProducts);
         document.getElementById('categorySelect').addEventListener('change', filterProducts);
+        document.getElementById('sortSelect').addEventListener('change', filterProducts); // New DOM Event
 
         // --- Shopping Cart Logic ---
         let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
