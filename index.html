@@ -265,23 +265,25 @@ function renderUI(products) {
                 return; 
             }
             
+ // Loop through each product object in the data array
             products.forEach(product => {
                 // Determine if we need to show the urgency badge
                 const stockBadge = product.stock < 5 
-                    ? `<span class="badge bg-danger mb-2 align-self-start">Only ${product.stock} left in stock!</span>` 
+                    ? `<span class="badge bg-danger mb-3 align-self-start">Only ${product.stock} left in stock!</span>` 
                     : '';
 
+                // DATA FLOW: Data is permanently written into the Browser's visible DOM.
                 grid.innerHTML += `
                     <div class="col-md-4 col-sm-6">
                         <div class="card h-100 shadow-sm">
                             <img src="${product.imageUrl}" class="card-img-top border-bottom" alt="Image of ${product.name}" style="height: 200px; object-fit: cover;">
                             <div class="card-body d-flex flex-column">
-                                ${stockBadge}
                                 <h5 class="card-title mb-1">${product.name}</h5>
                                 <div class="text-warning mb-2">
                                     &#9733; <span class="text-muted small">${product.rating}</span>
                                 </div>
-                                <h6 class="mb-3">$${product.price.toFixed(2)}</h6>
+                                <h6 class="mb-2">$${product.price.toFixed(2)}</h6>
+                                ${stockBadge}
                                 <button class="btn btn-outline-primary mt-auto add-to-cart-btn" 
                                     data-id="${product.id}" 
                                     data-name="${product.name}" 
@@ -292,7 +294,6 @@ function renderUI(products) {
                 `;
             });
         }
-
         /**
          * NEW: filterProducts() - Now includes Sorting logic!
          * Reads the inputs, filters the cached array, sorts it, and updates the DOM.
