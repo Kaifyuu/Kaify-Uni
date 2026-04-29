@@ -5,10 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive E-Commerce Prototype</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500,600,700&display=swap" rel="stylesheet">
+    
     <style>
-        html { scroll-behavior: smooth; }
-        .hero-section { background-color: #f8f9fa; padding: 80px 0; }
-        .product-img-placeholder { height: 200px; background-color: #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; }
+        /* 1. Typography & Animated Background */
+        body { 
+            font-family: 'General Sans', sans-serif; 
+            scroll-behavior: smooth; 
+            /* Chill, smooth flowing animated gradient */
+            background: linear-gradient(-45deg, #a18cd1, #fbc2eb, #8fd3f4, #a1c4fd);
+            background-size: 400% 400%;
+            animation: ambientFlow 15s ease infinite;
+            min-height: 100vh;
+        }
+
+        @keyframes ambientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 2. Glassmorphism for UI Elements */
+        .navbar, .card, .modal-content, .offcanvas, .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.7) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); /* Safari support */
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* 3. Refined Hero Section */
+        .hero-section { 
+            padding: 80px 0; 
+            color: #1a1a1a;
+        }
+        .hero-section .text-muted {
+            color: #4a4a4a !important;
+            font-weight: 500;
+        }
+
+        /* 4. Refined Cards & Inputs */
+        .card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15); 
+        }
+        .product-img-placeholder { 
+            height: 200px; 
+            background: rgba(255, 255, 255, 0.5); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #6c757d; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        
+        /* Make inputs readable over the glass */
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.5);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
     </style>
 </head>
 <body>
