@@ -211,20 +211,23 @@
         let allProducts = [];
         let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
 async function requestProducts() {
-    try {
+try {
         const response = await fetch(`${API_URL}api/products`);
         
-        // 1. Check if the server is actually responding
         if (!response.ok) {
             throw new Error(`Server responded with status: ${response.status}`);
         }
         
         const data = await response.json();
         
-        // 2. Check if the database query failed and sent back an error object
         if (data.error) {
             throw new Error(`Database Error: ${data.error}`);
         }
+
+        // THE FIX: MySQL sends decimals as strings. Convert them back to numbers.
+        data.forEach(item => {
+            item.price = parseFloat(item.price);
+        });
 
         allProducts = data;
         populateCategories(allProducts);
@@ -286,22 +289,23 @@ async function filterProducts() {
         ? `${API_URL}api/products?category=${category}` 
         : `${API_URL}api/products`;
 
-    try {
+try {
         // 3. Ask the Node.js backend/MySQL for the filtered category data
         const response = await fetch(endpoint);
         
-        // Handle 500 Server Error (required by rubric)
         if (!response.ok) throw new Error("Server down");
         
         let data = await response.json();
+
+        // THE FIX: Convert MySQL decimal strings to numbers before sorting/rendering
+        data.forEach(item => {
+            item.price = parseFloat(item.price);
+        });
 
         // 4. We still do Search and Sort locally on the data the backend gave us
         data = data.filter(p => p.name.toLowerCase().includes(search));
 
         if (sort === 'price-asc') data.sort((a, b) => a.price - b.price);
-        else if (sort === 'price-desc') data.sort((a, b) => b.price - a.price);
-        else if (sort === 'name-asc') data.sort((a, b) => a.name.localeCompare(b.name));
-        else if (sort === 'name-desc') data.sort((a, b) => b.name.localeCompare(a.name));
 
         // 5. Draw the final items to the screen
         renderUI(data);
