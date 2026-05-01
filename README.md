@@ -122,3 +122,23 @@ flowchart TD
     class Inc yesPath;
     class Push noPath;
 ```
+```mermaid
+sequenceDiagram
+    participant Client as Browser (Frontend)
+    participant Server as Express Backend
+    participant DB as JSON File (Data)
+
+    Client->>Server: GET /api/products (Headers: Accept JSON)
+    activate Server
+    
+    alt Server is Healthy
+        Server->>DB: Read products.json
+        activate DB
+        DB-->>Server: Return Data Array
+        deactivate DB
+        Server-->>Client: 200 OK + JSON Body
+    else Server is Down / DB Missing
+        Server-->>Client: 500 Internal Server Error (or 404)
+    end
+    deactivate Server
+```
