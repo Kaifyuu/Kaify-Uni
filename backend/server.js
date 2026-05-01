@@ -23,12 +23,35 @@ db.connect(err => {
     else console.log('Connected successfully to MySQL Database.');
 });
 
-// 1. Fetch Catalog
+// GET /api/products - Fetch catalog with optional category filtering
 app.get('/api/products', (req, res) => {
-    db.query('SELECT * FROM products', (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(results.map(p => ({...p, price: parseFloat(p.price), rating: parseFloat(p.rating)})));
-    });
+    // 1. The Gatekeeper checks if the frontend attached a '?category=' query
+    const requestedCategory = req.query.category;
+
+    if (requestedCategory) {
+        // 2. If a category is requested, securely query MySQL for only those items
+        // We use '?' to prevent SQL injection (a crucial Gatekeeper security step)
+        const sql = 'SELECT * FROM products WHERE category = ?';
+        
+        db.query(sql, [requestedCategory], (err, results) => {
+            if (err) {
+                console.error("Database error:", err);
+                return res.status(500).json({ error: "Internal Server Error" });
+            }
+            res.status(200).json(results);
+        });
+    } else {
+        // 3. If NO category is requested, return everything
+        const sql = 'SELECT * FROM products';
+        
+        db.query(sql, (err, results) => {
+            if (err) {
+                console.error("Database error:", err);
+                return res.status(500).json({ error: "Internal Server Error" });
+            }
+            res.status(200).json(results);
+        });
+    }
 });
 
 // 2. Authentication (Auto-Register if user is new)
