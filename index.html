@@ -443,35 +443,6 @@ try {
             bootstrap.Offcanvas.getInstance(document.getElementById('profileOffcanvas')).hide();
         });
 
- // REGISTRATION LOGIC
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('regName').value;
-    const email = document.getElementById('regEmail').value;
-    const password = document.getElementById('regPassword').value;
-
-    // FRONTEND VALIDATION (As required by assignment)
-    if (password.length < 8) return alert("Password must be at least 8 characters long.");
-    if (!/[A-Z]/.test(password)) return alert("Password must contain at least one uppercase letter.");
-    if (!/[!@#$%^&*]/.test(password)) return alert("Password must contain at least one special character (!@#$%^&*).");
-
-    try {
-        const res = await fetch(`${API_URL}api/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password })
-        });
-        const data = await res.json();
-        
-        if (!res.ok) return alert(`Registration failed: ${data.error}`);
-        
-        alert("Registration successful! Please switch to the Login tab.");
-        document.getElementById('registerForm').reset();
-    } catch (err) {
-        alert('Server connection failed.');
-    }
-});
-
 // LOGIN LOGIC
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -617,5 +588,6 @@ async function fetchOrders() {
 
         updateCartUI(); checkLoginState(); fetchOrders(); requestProducts();
     </script>
+    <script src="register.js"></script>
 </body>
 </html>
