@@ -55,24 +55,50 @@ app.get('/api/products', (req, res) => {
 });
 
 // 2. Authentication (Auto-Register if user is new)
-app.post('/api/auth', (req, res) => {
-    const { username, password } = req.body;
-    db.query('SELECT id FROM users WHERE username = ?', [username], (err, results) => {
+// NEW: Secure Registration Route
+app.post('/api/register', async (req, res) => {
+    const { name, email, password } = req.body; // Using email as username per assignment
+
+    // 1. Check if user exists
+    db.query('SELECT id FROM users WHERE username = ?', [email], async (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         
         if (results.length > 0) {
-            // User exists, verify password
-            db.query('SELECT id FROM users WHERE username = ? AND password = ?', [username, password], (err, loginRes) => {
-                if (loginRes.length === 0) return res.status(401).json({ error: 'Incorrect password' });
-                res.json({ userId: loginRes[0].id });
-            });
-        } else {
-            // User does not exist, auto-create account
-            db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, password], (err, regRes) => {
-                if (err) return res.status(500).json({ error: err.message });
-                res.json({ userId: regRes.insertId });
-            });
+            return res.status(409).json({ error: 'Username (email) already exists.' });
         }
+
+        // 2. Hash the password before saving
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // 3. Save to Database
+        db.query('INSERT INTO users (username, password) VALUES (?, ?)', [email, hashedPassword], (err, regRes) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.status(201).json({ message: "Registration successful. Please log in." });
+        });
+    });
+});
+
+// UPDATED: Secure Login Route
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+
+    db.query('SELECT id, password FROM users WHERE username = ?', [username], async (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        // Gatekeeper: User not found
+        if (results.length === 0) return res.status(401).json({ error: 'Invalid email or password' });
+
+        const user = results[0];
+
+        // Gatekeeper: Compare hash
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return res.status(401).json({ error: 'Invalid email or password' });
+
+        // Gatekeeper passed: Issue the "Passport" (JWT)
+        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+        
+        res.json({ token: token, userId: user.id });
     });
 });
 

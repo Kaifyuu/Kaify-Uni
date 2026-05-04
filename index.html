@@ -95,29 +95,57 @@
         </div>
     </section>
 
-    <div class="modal fade" id="authModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Login / Register</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="authForm">
-                        <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <input type="text" id="authUsername" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" id="authPassword" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Continue</button>
-                    </form>
+<div class="modal fade" id="authModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Welcome</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-3" id="authTabs">
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#loginTab">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#registerTab">Register</a></li>
+                </ul>
+                <div class="tab-content">
+                    <!-- Login Form -->
+                    <div class="tab-pane fade show active" id="loginTab">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label class="form-label">Email (Username)</label>
+                                <input type="email" id="loginEmail" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" id="loginPassword" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Login</button>
+                        </form>
+                    </div>
+                    <!-- Register Form -->
+                    <div class="tab-pane fade" id="registerTab">
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" id="regName" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" id="regEmail" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" id="regPassword" class="form-control" required>
+                                <small class="text-muted">Min 8 chars, 1 uppercase, 1 special char.</small>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Register</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <div class="modal fade" id="productDetailsModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -415,36 +443,69 @@ try {
             bootstrap.Offcanvas.getInstance(document.getElementById('profileOffcanvas')).hide();
         });
 
-        document.getElementById('authForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const u = document.getElementById('authUsername').value;
-            const p = document.getElementById('authPassword').value;
+ // REGISTRATION LOGIC
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
 
-            if (u === 'admin' && p === 'admin123') {
-                window.location.href = 'admin.html';
-                return;
-            }
+    // FRONTEND VALIDATION (As required by assignment)
+    if (password.length < 8) return alert("Password must be at least 8 characters long.");
+    if (!/[A-Z]/.test(password)) return alert("Password must contain at least one uppercase letter.");
+    if (!/[!@#$%^&*]/.test(password)) return alert("Password must contain at least one special character (!@#$%^&*).");
 
-            try {
-                const res = await fetch(`${API_URL}api/auth`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p })
-                });
-                
-                if (!res.ok) return alert('Incorrect password.');
-                
-                const data = await res.json();
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('userId', data.userId); // Save DB ID
-                
-                checkLoginState();
-                fetchOrders(); // Pull their specific orders
-                bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
-            } catch (err) {
-                alert('Server connection failed.');
-            }
+    try {
+        const res = await fetch(`${API_URL}api/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
         });
+        const data = await res.json();
+        
+        if (!res.ok) return alert(`Registration failed: ${data.error}`);
+        
+        alert("Registration successful! Please switch to the Login tab.");
+        document.getElementById('registerForm').reset();
+    } catch (err) {
+        alert('Server connection failed.');
+    }
+});
+
+// LOGIN LOGIC
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const u = document.getElementById('loginEmail').value;
+    const p = document.getElementById('loginPassword').value;
+
+    if (u === 'admin' && p === 'admin123') {
+        window.location.href = 'admin.html';
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, password: p })
+        });
+        
+        if (!res.ok) return alert('Invalid email or password.');
+        
+        const data = await res.json();
+        
+        // Store the JWT Token and User ID
+        localStorage.setItem('jwtToken', data.token); 
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userId', data.userId);
+        
+        checkLoginState();
+        fetchOrders();
+        bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+    } catch (err) {
+        alert('Server connection failed.');
+    }
+});
 
 document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
