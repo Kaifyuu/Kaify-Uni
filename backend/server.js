@@ -11,6 +11,7 @@ app.use(express.json());
 
 // Add this near the top of server.js where you define your app
 const productRoutes = require('./routes/products');
+const checkoutRoutes = require('./routes/checkout');
 
 // Cloud-Ready MySQL Connection
 const db = require('./db');
@@ -18,6 +19,7 @@ const db = require('./db');
 // Delete your old app.get('/api/products', ...) block.
 // Replace it with this single line:
 app.use('/api/products', productRoutes);
+app.use('/api/checkout', checkoutRoutes); 
 
 // 2. Authentication (Auto-Register if user is new)
 // NEW: Secure Registration Route

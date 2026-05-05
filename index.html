@@ -459,71 +459,68 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 });
 
 document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (cartState.length === 0) return alert("Cart is empty.");
-            
-            const userId = localStorage.getItem('userId');
-            if (!userId) {
-                bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
-                return alert("You must be logged in to checkout!");
-            }
+    e.preventDefault();
+    
+    if (cartState.length === 0) return alert("Cart is empty.");
+    
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+        bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
+        return alert("You must be logged in to checkout!");
+    }
 
-            // Grab the credit card number from the input field
-            const ccInput = document.querySelector('input[placeholder="16 Digits Required"]').value;
-            
-            // UI Feedback: Change button text to show processing
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerText;
-            submitBtn.innerText = "Processing Payment...";
-            submitBtn.disabled = true;
-            
-            const ship = parseFloat(document.getElementById('shippingSelect').value);
-            const total = cartState.reduce((s, i) => s + (i.price * i.quantity), 0) + ship;
-            const step = Math.floor(Math.random() * 3) + 1;
-            
-            const newOrder = {
-                userId: userId,
-                date: new Date().toLocaleDateString(),
-                total: total.toFixed(2),
-                items: cartState,
-                statusStep: step,
-                statusText: ["Placed", "Packed", "Shipped", "Delivered"][step],
-                paymentDetails: { cardNumber: ccInput } // Send to server for validation
-            };
+    // 1. Grab the inputs
+    const ccInput = document.querySelector('input[placeholder="16 Digits Required"]').value;
+    const shippingVal = document.getElementById('shippingSelect').value;
+    const userEmail = localStorage.getItem('userEmail') || 'guest@example.com'; 
 
-            try {
-                const response = await fetch(`${API_URL}api/orders`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newOrder)
-                });
-                
-                const data = await response.json();
+    // 2. Setup button states (These were missing in your paste!)
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerText;
+    submitBtn.innerText = "Processing Payment...";
+    submitBtn.disabled = true;
 
-                // Handle Mock Stripe Rejection
-                if (!response.ok) {
-                    alert(`Payment Error: ${data.error}`);
-                    submitBtn.innerText = originalBtnText;
-                    submitBtn.disabled = false;
-                    return; // Stop execution, keep cart intact
-                }
-                
-                // Success!
-                fetchOrders();
-                e.target.classList.add('d-none');
-                document.getElementById('checkoutSuccess').classList.remove('d-none');
-                cartState = []; 
-                updateCartDisplay();
-                localStorage.removeItem('shopping_cart'); 
-                
-            } catch (err) {
-                alert("Server connection failed during checkout.");
-            } finally {
-                // Always reset button state just in case
-                submitBtn.innerText = originalBtnText;
-                submitBtn.disabled = false;
-            }
+    // 3. Prepare the Payload
+    const payload = {
+        items: cartState,
+        email: userEmail,
+        cardNumber: ccInput,
+        shippingMethod: shippingVal
+    };
+
+    try {
+        // 4. Hit the new Gatekeeper route
+        const response = await fetch(`${API_URL}api/checkout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
+        
+        const data = await response.json();
+
+        // 5. Handle Server-Side Rejection
+        if (!response.ok) {
+            alert(`Payment Error: ${data.error}`);
+            submitBtn.innerText = originalBtnText;
+            submitBtn.disabled = false;
+            return; 
+        }
+        
+        // 6. Success! Update UI and clear cart
+        fetchOrders();
+        e.target.classList.add('d-none');
+        document.getElementById('checkoutSuccess').classList.remove('d-none');
+        cartState = []; 
+        updateCartDisplay(); // Make sure this matches your UI render function
+        localStorage.removeItem('shopping_cart'); 
+        
+    } catch (err) {
+        console.error(err);
+        alert("Server connection failed during checkout.");
+        submitBtn.innerText = originalBtnText;
+        submitBtn.disabled = false;
+    }
+});
 
 // Fetch orders from backend
 async function fetchOrders() {
