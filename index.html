@@ -298,8 +298,7 @@ try {
                                 ${stockBadge}
                                 <div class="mt-auto d-flex gap-2">
                                     <button class="btn btn-outline-secondary w-50 view-details-btn" data-id="${product.id}">Details</button>
-                                    <button class="btn btn-primary add-to-cart" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}">Add to Cart</button>
-                                </div>
+<button class="btn btn-primary add-to-cart" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}" data-stock="${product.stock}">Add to Cart</button>                                </div>
                             </div>
                         </div>
                     </div>`;
@@ -396,7 +395,7 @@ try {
                 const action = e.target.dataset.action;
                 const idx = cartState.findIndex(i => i.id === id);
                 if (action === 'inc') {
-                    const stock = allProducts.find(p => p.id === id).stock;
+                    const stock = allProducts.find(p => p.id == id).stock;
                     if (cartState[idx].quantity < stock) cartState[idx].quantity++;
                     else alert("Out of stock.");
                 } else {
