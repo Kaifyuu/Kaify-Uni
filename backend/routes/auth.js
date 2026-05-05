@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const db = require('../db'); // Import your promise-based DB pool
+const db = require('../db'); 
 
 // --- REGISTRATION ROUTE ---
 router.post('/register', async (req, res) => {
     try {
+        // We still accept 'name' from the frontend so the UI doesn't crash, 
+        // but we will ignore it in the database query.
         const { name, email, password } = req.body;
 
         const [existingUsers] = await db.query('SELECT * FROM users WHERE username = ?', [email]);
@@ -15,9 +17,11 @@ router.post('/register', async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // THE FIX: Removed 'name' from the INSERT query to match your database schema
         await db.query(
-            'INSERT INTO users (name, username, password) VALUES (?, ?, ?)',
-            [name, email, hashedPassword]
+            'INSERT INTO users (username, password) VALUES (?, ?)',
+            [email, hashedPassword]
         );
 
         res.status(201).json({ message: 'Registration successful!' });
