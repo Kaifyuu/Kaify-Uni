@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
 // Cloud-Ready MySQL Connection (Now with SSL bypass for Aiven!)
 const db = mysql.createConnection({
