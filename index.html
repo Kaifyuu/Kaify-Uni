@@ -91,7 +91,7 @@
                     </select>
                 </div>
             </div>
-            <div class="row g-4" id="productGrid"></div>
+            <div class="row g-4" id="catalog"></div>
         </div>
     </section>
 
@@ -234,10 +234,10 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="cart.js"></script>
     <script>
         const API_URL = 'https://kaify-uni-backend.onrender.com/';
         let allProducts = [];
-        let cart = JSON.parse(localStorage.getItem('protoCart')) || [];
 async function requestProducts() {
 try {
         const response = await fetch(`${API_URL}api/products`);
@@ -264,7 +264,7 @@ try {
     } catch (error) {
         console.error("Error fetching catalog:", error);
         // 3. Print the EXACT error to the screen so you aren't flying blind
-        document.getElementById('productGrid').innerHTML = `<p class="text-danger text-center w-100 py-5">Connection Issue: ${error.message}</p>`;
+        document.getElementById('catalog').innerHTML = `<p class="text-danger text-center w-100 py-5">Connection Issue: ${error.message}</p>`;
     }
 }
 
@@ -277,7 +277,7 @@ try {
         }
 
         function renderUI(products) {
-            const grid = document.getElementById('productGrid');
+            const grid = document.getElementById('catalog');
             grid.innerHTML = '';
             if (products.length === 0) {
                 grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><h4>No products match your criteria.</h4></div>';
@@ -298,7 +298,7 @@ try {
                                 ${stockBadge}
                                 <div class="mt-auto d-flex gap-2">
                                     <button class="btn btn-outline-secondary w-50 view-details-btn" data-id="${product.id}">Details</button>
-                                    <button class="btn btn-primary w-50 add-to-cart-btn" data-id="${product.id}">Add</button>
+                                    <button class="btn btn-primary add-to-cart" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}">Add to Cart</button>
                                 </div>
                             </div>
                         </div>
@@ -344,48 +344,35 @@ try {
     }
 }
 
-        const updateCartUI = () => {
+        const updateCartDisplay = () => {
             const list = document.getElementById('cartItemsList');
             const totalEl = document.getElementById('cartTotal');
             const countEl = document.getElementById('cartCount');
             list.innerHTML = '';
             let total = 0, count = 0;
-            cart.forEach(item => {
-                total += item.price * item.qty;
-                count += item.qty;
+            cartState.forEach(item => {
+                total += item.price * item.quantity;
+                count += item.quantity;
                 list.innerHTML += `
                     <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
                         <div>
                             <h6 class="my-0">${item.name}</h6>
                             <div class="input-group input-group-sm mt-1" style="width: 90px;">
                                 <button class="btn btn-outline-secondary cart-qty-btn" data-id="${item.id}" data-action="dec">-</button>
-                                <input type="text" class="form-control text-center" value="${item.qty}" readonly>
+                                <input type="text" class="form-control text-center" value="${item.quantity}" readonly>
                                 <button class="btn btn-outline-secondary cart-qty-btn" data-id="${item.id}" data-action="inc">+</button>
                             </div>
                         </div>
-                        <span class="text-dark">$${(item.price * item.qty).toFixed(2)}</span>
+                        <span class="text-dark">$${(item.price * item.quantity).toFixed(2)}</span>
                     </li>`;
             });
             totalEl.innerText = `$${total.toFixed(2)}`;
             countEl.innerText = count;
-            localStorage.setItem('protoCart', JSON.stringify(cart));
+            localStorage.setItem('shopping_cart', JSON.stringify(cartState));
         };
 
-        const handleAddToCart = (id) => {
-            const product = allProducts.find(p => p.id === id);
-            const existing = cart.find(item => item.id === id);
-            if ((existing ? existing.qty : 0) >= product.stock) {
-                alert(`Limit reached. Only ${product.stock} available.`);
-                return;
-            }
-            if (existing) existing.qty++;
-            else cart.push({ id, name: product.name, price: product.price, qty: 1 });
-            updateCartUI();
-        };
-
-        document.getElementById('productGrid').addEventListener('click', e => {
+        document.getElementById('catalog').addEventListener('click', e => {
             const id = e.target.dataset.id;
-            if (e.target.classList.contains('add-to-cart-btn')) handleAddToCart(id);
             if (e.target.classList.contains('view-details-btn')) {
                 const p = allProducts.find(x => x.id === id);
                 document.getElementById('productDetailsBody').innerHTML = `
@@ -396,17 +383,10 @@ try {
                             <div class="text-warning fs-5 mb-2">&#9733; <span class="text-muted small">${p.rating} / 5.0</span></div>
                             <h4 class="text-success fw-bold mb-3">$${p.price.toFixed(2)}</h4>
                             <p class="text-muted flex-grow-1">${p.description}</p>
-                            <button class="btn btn-primary btn-lg w-100 modal-add-to-cart-btn" data-id="${p.id}">Add to Cart</button>
+                            <button class="btn btn-primary btn-lg w-100 add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">Add to Cart</button>
                         </div>
                     </div>`;
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('productDetailsModal')).show();
-            }
-        });
-
-        document.getElementById('productDetailsBody').addEventListener('click', e => {
-            if (e.target.classList.contains('modal-add-to-cart-btn')) {
-                e.stopPropagation();
-                handleAddToCart(e.target.dataset.id);
             }
         });
 
@@ -414,16 +394,16 @@ try {
             if (e.target.classList.contains('cart-qty-btn')) {
                 const id = e.target.dataset.id;
                 const action = e.target.dataset.action;
-                const idx = cart.findIndex(i => i.id === id);
+                const idx = cartState.findIndex(i => i.id === id);
                 if (action === 'inc') {
                     const stock = allProducts.find(p => p.id === id).stock;
-                    if (cart[idx].qty < stock) cart[idx].qty++;
+                    if (cartState[idx].quantity < stock) cartState[idx].quantity++;
                     else alert("Out of stock.");
                 } else {
-                    if (cart[idx].qty > 1) cart[idx].qty--;
-                    else cart.splice(idx, 1);
+                    if (cartState[idx].quantity > 1) cartState[idx].quantity--;
+                    else cartState.splice(idx, 1);
                 }
-                updateCartUI();
+                updateCartDisplay();
             }
         });
 
@@ -480,7 +460,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
 document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (cart.length === 0) return alert("Cart is empty.");
+            if (cartState.length === 0) return alert("Cart is empty.");
             
             const userId = localStorage.getItem('userId');
             if (!userId) {
@@ -498,14 +478,14 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
             submitBtn.disabled = true;
             
             const ship = parseFloat(document.getElementById('shippingSelect').value);
-            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0) + ship;
+            const total = cartState.reduce((s, i) => s + (i.price * i.quantity), 0) + ship;
             const step = Math.floor(Math.random() * 3) + 1;
             
             const newOrder = {
                 userId: userId,
                 date: new Date().toLocaleDateString(),
                 total: total.toFixed(2),
-                items: cart,
+                items: cartState,
                 statusStep: step,
                 statusText: ["Placed", "Packed", "Shipped", "Delivered"][step],
                 paymentDetails: { cardNumber: ccInput } // Send to server for validation
@@ -532,9 +512,9 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
                 fetchOrders();
                 e.target.classList.add('d-none');
                 document.getElementById('checkoutSuccess').classList.remove('d-none');
-                cart = []; 
-                updateCartUI();
-                localStorage.removeItem('protoCart'); 
+                cartState = []; 
+                updateCartDisplay();
+                localStorage.removeItem('shopping_cart'); 
                 
             } catch (err) {
                 alert("Server connection failed during checkout.");
@@ -583,7 +563,7 @@ async function fetchOrders() {
 
         ['searchInput', 'categorySelect', 'sortSelect'].forEach(id => document.getElementById(id).addEventListener('change', filterProducts));
         document.getElementById('searchInput').addEventListener('input', filterProducts);
-        document.getElementById('clearCartBtn').addEventListener('click', () => { cart = []; updateCartUI(); });
+        document.getElementById('clearCartBtn').addEventListener('click', () => { cartState = []; updateCartDisplay(); });
         document.getElementById('checkoutModal').addEventListener('show.bs.modal', () => { const f = document.getElementById('checkoutForm'); f.classList.remove('d-none'); f.reset(); document.getElementById('checkoutSuccess').classList.add('d-none'); });
 
         updateCartUI(); checkLoginState(); fetchOrders(); requestProducts();

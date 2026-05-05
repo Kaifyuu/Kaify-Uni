@@ -9,53 +9,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Cloud-Ready MySQL Connection (Now with SSL bypass for Aiven!)
-const db = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '', 
-    database: process.env.DB_NAME || 'ecommerce_db',
-    port: process.env.DB_PORT || 3306,
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
+// Add this near the top of server.js where you define your app
+const productRoutes = require('./routes/products');
+
+// Cloud-Ready MySQL Connection
+const db = require('./db');
 
 db.connect(err => {
     if (err) console.error('Database connection failed:', err);
     else console.log('Connected successfully to MySQL Database.');
 });
 
-// GET /api/products - Fetch catalog with optional category filtering
-app.get('/api/products', (req, res) => {
-    // 1. The Gatekeeper checks if the frontend attached a '?category=' query
-    const requestedCategory = req.query.category;
-
-    if (requestedCategory) {
-        // 2. If a category is requested, securely query MySQL for only those items
-        // We use '?' to prevent SQL injection (a crucial Gatekeeper security step)
-        const sql = 'SELECT * FROM products WHERE category = ?';
-        
-        db.query(sql, [requestedCategory], (err, results) => {
-            if (err) {
-                console.error("Database error:", err);
-                return res.status(500).json({ error: "Internal Server Error" });
-            }
-            res.status(200).json(results);
-        });
-    } else {
-        // 3. If NO category is requested, return everything
-        const sql = 'SELECT * FROM products';
-        
-        db.query(sql, (err, results) => {
-            if (err) {
-                console.error("Database error:", err);
-                return res.status(500).json({ error: "Internal Server Error" });
-            }
-            res.status(200).json(results);
-        });
-    }
-});
+// Delete your old app.get('/api/products', ...) block.
+// Replace it with this single line:
+app.use('/api/products', productRoutes);
 
 // 2. Authentication (Auto-Register if user is new)
 // NEW: Secure Registration Route
