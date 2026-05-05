@@ -15,11 +15,6 @@ const productRoutes = require('./routes/products');
 // Cloud-Ready MySQL Connection
 const db = require('./db');
 
-db.connect(err => {
-    if (err) console.error('Database connection failed:', err);
-    else console.log('Connected successfully to MySQL Database.');
-});
-
 // Delete your old app.get('/api/products', ...) block.
 // Replace it with this single line:
 app.use('/api/products', productRoutes);
