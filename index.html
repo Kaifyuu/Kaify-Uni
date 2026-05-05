@@ -135,8 +135,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Password</label>
-                                <input type="password" id="regPassword" class="form-control" required>
-                                <small class="text-muted">Min 8 chars, 1 uppercase, 1 special char.</small>
+<input type="password" id="regPassword" class="form-control" pattern="(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}" title="Must contain at least 8 characters, one uppercase letter, and one special character" required>                                <small class="text-muted">Min 8 chars, 1 uppercase, 1 special char.</small>
                             </div>
                             <button type="submit" class="btn btn-success w-100">Register</button>
                         </form>
