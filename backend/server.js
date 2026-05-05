@@ -23,12 +23,14 @@ app.use('/api/checkout', checkoutRoutes);
 
 // 2. Authentication (Auto-Register if user is new)
 // --- REGISTRATION ROUTE ---
+// --- REGISTRATION ROUTE ---
 app.post('/api/register', async (req, res) => {
     try {
+        // The frontend sends 'name', 'email', and 'password'
         const { name, email, password } = req.body;
 
-        // 1. AWAIT the database check to see if user exists
-        const [existingUsers] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        // 1. AWAIT the database check using the 'username' column instead of 'email'
+        const [existingUsers] = await db.query('SELECT * FROM users WHERE username = ?', [email]);
         
         if (existingUsers.length > 0) {
             return res.status(400).json({ error: 'Email already in use.' });
@@ -37,9 +39,9 @@ app.post('/api/register', async (req, res) => {
         // 2. AWAIT bcrypt password hash
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 3. AWAIT the database insert
+        // 3. AWAIT the database insert, specifically targeting the 'username' column
         const [result] = await db.query(
-            'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+            'INSERT INTO users (name, username, password) VALUES (?, ?, ?)',
             [name, email, hashedPassword]
         );
 
@@ -56,8 +58,8 @@ app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body; 
 
-        // 1. AWAIT the database query to find the user
-        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [username]);
+        // 1. AWAIT the database query to find the user using the 'username' column
+        const [users] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
 
         if (users.length === 0) {
             return res.status(401).json({ error: 'Invalid email or password.' });
