@@ -481,6 +481,7 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
 
     // 3. Prepare the Payload
     const payload = {
+        userId: userId,
         items: cartState,
         email: userEmail,
         cardNumber: ccInput,

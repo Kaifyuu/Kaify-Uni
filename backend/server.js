@@ -85,12 +85,15 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 3. Fetch Personalized Orders
-app.get('/api/orders/:userId', (req, res) => {
-    db.query('SELECT * FROM orders WHERE userId = ? ORDER BY id DESC', [req.params.userId], (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(results);
-    });
+// --- FETCH ORDERS ROUTE ---
+app.get('/api/orders/:userId', async (req, res) => {
+    try {
+        const [orders] = await db.query('SELECT * FROM orders WHERE userId = ?', [req.params.userId]);
+        res.status(200).json(orders);
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+        res.status(500).json({ error: "Failed to fetch order history." });
+    }
 });
 
 // Mock Payment Gateway (Simulating Stripe)
