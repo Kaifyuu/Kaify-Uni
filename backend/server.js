@@ -12,6 +12,8 @@ app.use(express.json());
 // Add this near the top of server.js where you define your app
 const productRoutes = require('./routes/products');
 const checkoutRoutes = require('./routes/checkout');
+const authRoutes = require('./routes/auth');
+app.use('/api', authRoutes); // This automatically handles /api/login and /api/register
 
 // Cloud-Ready MySQL Connection
 const db = require('./db');
@@ -20,70 +22,6 @@ const db = require('./db');
 // Replace it with this single line:
 app.use('/api/products', productRoutes);
 app.use('/api/checkout', checkoutRoutes); 
-
-// 2. Authentication (Auto-Register if user is new)
-// --- REGISTRATION ROUTE ---
-// --- REGISTRATION ROUTE ---
-app.post('/api/register', async (req, res) => {
-    try {
-        // The frontend sends 'name', 'email', and 'password'
-        const { name, email, password } = req.body;
-
-        // 1. AWAIT the database check using the 'username' column instead of 'email'
-        const [existingUsers] = await db.query('SELECT * FROM users WHERE username = ?', [email]);
-        
-        if (existingUsers.length > 0) {
-            return res.status(400).json({ error: 'Email already in use.' });
-        }
-
-        // 2. AWAIT bcrypt password hash
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // 3. AWAIT the database insert, specifically targeting the 'username' column
-        const [result] = await db.query(
-            'INSERT INTO users (name, username, password) VALUES (?, ?, ?)',
-            [name, email, hashedPassword]
-        );
-
-        res.status(201).json({ message: 'Registration successful!' });
-
-    } catch (error) {
-        console.error("Registration error:", error);
-        res.status(500).json({ error: 'Server error during registration.' });
-    }
-});
-
-// --- LOGIN ROUTE ---
-app.post('/api/login', async (req, res) => {
-    try {
-        const { username, password } = req.body; 
-
-        // 1. AWAIT the database query to find the user using the 'username' column
-        const [users] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
-
-        if (users.length === 0) {
-            return res.status(401).json({ error: 'Invalid email or password.' });
-        }
-
-        const user = users[0];
-
-        // 2. AWAIT bcrypt comparison
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Invalid email or password.' });
-        }
-
-        // 3. Generate token
-        const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
-
-        res.status(200).json({ token: token, userId: user.id });
-
-    } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ error: 'Server error during login.' });
-    }
-});
 
 // --- FETCH ORDERS ROUTE ---
 app.get('/api/orders/:userId', async (req, res) => {
