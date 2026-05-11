@@ -606,13 +606,21 @@ async function loadRecommendations(productId) {
     try {
         const response = await fetch(`${API_URL}api/products/${productId}/recommendations`);
         if (!response.ok) throw new Error('Failed to load recommendations');
+        
         const recommendations = await response.json();
+        
+        recommendations.forEach(rec => {
+            rec.price = parseFloat(rec.price);
+        });
+
         const container = document.getElementById('recommendationContainer');
         container.innerHTML = '';
+        
         if (recommendations.length === 0) {
             container.innerHTML = '<p class="text-muted">No recommendations available.</p>';
             return;
         }
+        
         recommendations.forEach(rec => {
             const stockBadge = rec.stock < 5 ? `<span class="badge bg-danger mb-3 align-self-start">Only ${rec.stock} left!</span>` : '';
             container.innerHTML += `
