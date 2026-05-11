@@ -396,8 +396,8 @@ try {
             }
         });
 
-        document.getElementById('recommendationContainer').addEventListener('click', e => {
-            if (e.target.classList.contains('view-details-btn')) {
+            document.getElementById('productDetailsBody').addEventListener('click', e => {
+                if (e.target.classList.contains('view-details-btn')) {
                 const id = e.target.dataset.id;
                 bootstrap.Modal.getInstance(document.getElementById('productDetailsModal')).hide();
                 const p = allProducts.find(x => x.id === id);

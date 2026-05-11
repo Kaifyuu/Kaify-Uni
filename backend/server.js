@@ -76,22 +76,63 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // 5. Admin: Fetch ALL Orders (Global)
-app.get('/api/admin/orders', (req, res) => {
-    db.query('SELECT * FROM orders ORDER BY id DESC', (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+app.get('/api/admin/orders', async (req, res) => {
+    try {
+        const [results] = await db.query('SELECT * FROM orders ORDER BY id DESC');
         res.json(results);
-    });
+    } catch (err) {
+        console.error("Admin Orders Error:", err); // Developer sees this
+        res.status(500).json({ error: "Failed to retrieve admin orders." }); // User sees this
+    }
 });
 
 // 6. Admin: Update Product Stock directly in MySQL
-app.put('/api/products/:id', (req, res) => {
-    const newStock = req.body.stock;
-    const productId = req.params.id;
-    
-    db.query('UPDATE products SET stock = ? WHERE id = ?', [newStock, productId], (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+app.put('/api/products/:id', async (req, res) => {
+    try {
+        const newStock = req.body.stock;
+        const productId = req.params.id;
+        
+        await db.query('UPDATE products SET stock = ? WHERE id = ?', [newStock, productId]);
         res.json({ message: 'Stock updated successfully' });
-    });
+    } catch (err) {
+        console.error("Stock Update Error:", err); // Developer sees this
+        res.status(500).json({ error: "Failed to update product stock." }); // User sees this
+    }
+});
+
+// 7. Admin: Advance Order Status (Multi-Step Logic)
+app.put('/api/admin/orders/:id/status', async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        
+        // Step A: Check the current status
+        const [results] = await db.query('SELECT statusStep FROM orders WHERE id = ?', [orderId]);
+        
+        if (results.length === 0) {
+            return res.status(404).json({ error: "Order not found." });
+        }
+        
+        let currentStep = results[0].statusStep;
+        
+        // Gatekeeper Validation: Stop if it's already delivered
+        if (currentStep >= 3) {
+            return res.status(400).json({ error: "Order is already fully delivered." });
+        }
+        
+        // Step B: Calculate the next step and text
+        const nextStep = currentStep + 1;
+        let nextText = "Placed";
+        if (nextStep === 1) nextText = "Packed";
+        if (nextStep === 2) nextText = "Shipped";
+        if (nextStep === 3) nextText = "Delivered";
+        
+        // Step C: Save to database
+        await db.query('UPDATE orders SET statusStep = ?, statusText = ? WHERE id = ?', [nextStep, nextText, orderId]);
+        res.json({ message: "Order advanced successfully", newStep: nextStep, newText: nextText });
+    } catch (err) {
+        console.error("Status Update Error:", err);
+        res.status(500).json({ error: "Failed to advance order status." });
+    }
 });
 
 // Render provides the PORT variable automatically
