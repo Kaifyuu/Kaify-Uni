@@ -31,6 +31,7 @@
         .hero-section .text-muted { color: #4a4a4a !important; font-weight: 500; }
         .card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15); }
+        .recommendation-card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15); }
         .form-control:focus, .form-select:focus {
             background: rgba(255, 255, 255, 0.9) !important;
             box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.5);
@@ -383,7 +384,35 @@ try {
                             <p class="text-muted flex-grow-1">${p.description}</p>
                             <button class="btn btn-primary btn-lg w-100 add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">Add to Cart</button>
                         </div>
-                    </div>`;
+                    </div>
+                    <hr>
+                    <h6>Customers also bought:</h6>
+                    <div id="recommendationContainer" class="row g-2 mt-2"></div>`;
+                loadRecommendations(id);
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('productDetailsModal')).show();
+            }
+        });
+
+        document.getElementById('recommendationContainer').addEventListener('click', e => {
+            if (e.target.classList.contains('view-details-btn')) {
+                const id = e.target.dataset.id;
+                bootstrap.Modal.getInstance(document.getElementById('productDetailsModal')).hide();
+                const p = allProducts.find(x => x.id === id);
+                document.getElementById('productDetailsBody').innerHTML = `
+                    <div class="row g-4 mt-1">
+                        <div class="col-md-6"><img src="${p.imageUrl}" class="img-fluid rounded border" alt="${p.name}"></div>
+                        <div class="col-md-6 d-flex flex-column">
+                            <h3 class="fw-bold text-dark">${p.name}</h3>
+                            <div class="text-warning fs-5 mb-2">&#9733; <span class="text-muted small">${p.rating} / 5.0</span></div>
+                            <h4 class="text-success fw-bold mb-3">$${p.price.toFixed(2)}</h4>
+                            <p class="text-muted flex-grow-1">${p.description}</p>
+                            <button class="btn btn-primary btn-lg w-100 add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">Add to Cart</button>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>Customers also bought:</h6>
+                    <div id="recommendationContainer" class="row g-2 mt-2"></div>`;
+                loadRecommendations(id);
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('productDetailsModal')).show();
             }
         });
@@ -569,6 +598,41 @@ const updateOrderHistoryUI = (orders) => {
             </div>`;
     });
 };
+
+async function loadRecommendations(productId) {
+    try {
+        const response = await fetch(`${API_URL}api/products/${productId}/recommendations`);
+        if (!response.ok) throw new Error('Failed to load recommendations');
+        const recommendations = await response.json();
+        const container = document.getElementById('recommendationContainer');
+        container.innerHTML = '';
+        if (recommendations.length === 0) {
+            container.innerHTML = '<p class="text-muted">No recommendations available.</p>';
+            return;
+        }
+        recommendations.forEach(rec => {
+            const stockBadge = rec.stock < 5 ? `<span class="badge bg-danger mb-3 align-self-start">Only ${rec.stock} left!</span>` : '';
+            container.innerHTML += `
+                <div class="col-md-6 col-sm-6">
+                    <div class="recommendation-card card h-100 shadow-sm border-0">
+                        <img src="${rec.imageUrl}" class="card-img-top border-bottom" alt="${rec.name}" style="height: 150px; object-fit: cover;">
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title text-dark mb-1">${rec.name}</h6>
+                            <div class="text-warning mb-2">&#9733; <span class="text-muted small">${rec.rating}</span></div>
+                            <h6 class="text-dark mb-2">$${rec.price.toFixed(2)}</h6>
+                            ${stockBadge}
+                            <div class="mt-auto">
+                                <button class="btn btn-outline-secondary w-100 view-details-btn" data-id="${rec.id}">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+    } catch (error) {
+        console.error('Error loading recommendations:', error);
+        document.getElementById('recommendationContainer').innerHTML = '<p class="text-danger">Failed to load recommendations.</p>';
+    }
+}
 
         ['searchInput', 'categorySelect', 'sortSelect'].forEach(id => document.getElementById(id).addEventListener('change', filterProducts));
         document.getElementById('searchInput').addEventListener('input', filterProducts);
