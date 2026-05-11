@@ -236,7 +236,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="cart.js"></script>
     <script>
-        const API_URL = 'https://kaify-uni-backend.onrender.com/';
+        // Automatically detect if we are on localhost or live on GitHub Pages
+        const API_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') 
+            ? 'http://localhost:3000/' 
+            : 'https://kaify-uni-backend.onrender.com/'; 
         let allProducts = [];
 async function requestProducts() {
 try {
@@ -634,8 +637,22 @@ async function loadRecommendations(productId) {
     }
 }
 
+        // --- THE DEBOUNCE FIX ---
+        let debounceTimer;
+        const searchInput = document.getElementById('searchInput');
+
+        // Remove the old direct event listener if it exists
+        // searchInput.addEventListener('input', filterProducts); 
+
+        // Add the new debounced listener
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer); // Cancel the previous timer
+            debounceTimer = setTimeout(() => {
+                filterProducts(); // Only run this after the user pauses for 300ms
+            }, 300); 
+        });
+
         ['searchInput', 'categorySelect', 'sortSelect'].forEach(id => document.getElementById(id).addEventListener('change', filterProducts));
-        document.getElementById('searchInput').addEventListener('input', filterProducts);
         document.getElementById('clearCartBtn').addEventListener('click', () => { cartState = []; updateCartDisplay(); });
         document.getElementById('checkoutModal').addEventListener('show.bs.modal', () => { const f = document.getElementById('checkoutForm'); f.classList.remove('d-none'); f.reset(); document.getElementById('checkoutSuccess').classList.add('d-none'); });
 
