@@ -16,24 +16,34 @@ router.post('/', async (req, res) => {
         const ccRegex = /^\d{16}$/;
         if (!cardNumber || !ccRegex.test(cardNumber)) return res.status(400).json({ error: "Invalid card format." });
         
-        // --- CALCULATION (Using TRUE prices from DB) ---
+        // --- ATOMIC PERSISTENCE (Session 7 & Bonus A: Stock Check) ---
+        await connection.beginTransaction();
+
+        // --- CALCULATION & INVENTORY VERIFICATION ---
         const itemIds = items.map(item => item.id);
-        const [dbProducts] = await connection.query(`SELECT id, price FROM products WHERE id IN (?)`, [itemIds]);
         
-        const truePrices = {};
-        dbProducts.forEach(p => { truePrices[p.id] = parseFloat(p.price); });
+        // We moved this query inside the transaction and added 'stock' and 'FOR UPDATE'
+        const [dbProducts] = await connection.query(`SELECT id, price, stock FROM products WHERE id IN (?) FOR UPDATE`, [itemIds]);
+        
+        const trueData = {};
+        dbProducts.forEach(p => { 
+            trueData[p.id] = { price: parseFloat(p.price), stock: parseInt(p.stock) }; 
+        });
 
         let serverTotal = 0;
         for (const item of items) {
-            const truePrice = truePrices[item.id];
-            if (truePrice === undefined) throw new Error(`Product ${item.id} not found.`);
-            serverTotal += (truePrice * item.quantity);
-            item.price = truePrice; 
+            const dbItem = trueData[item.id];
+            if (!dbItem) throw new Error(`Product ${item.id} not found.`);
+            
+            // The Fix: Prevent Unsigned Integer crash and block overselling
+            if (dbItem.stock < item.quantity) {
+                throw new Error(`Out of stock: Only ${dbItem.stock} left for item ID ${item.id}.`);
+            }
+
+            serverTotal += (dbItem.price * item.quantity);
+            item.price = dbItem.price; 
         }
         serverTotal += parseFloat(shippingMethod);
-
-        // --- ATOMIC PERSISTENCE (Session 7: All-or-Nothing) ---
-        await connection.beginTransaction();
 
         const date = new Date().toISOString().slice(0, 19).replace('T', ' '); // MySQL format
         
@@ -51,7 +61,7 @@ router.post('/', async (req, res) => {
             [orderItemEntries]
         );
 
-        // 3. Decrement Product Stock
+        // 3. Decrement Product Stock safely
         for (const item of items) {
             await connection.query(
                 'UPDATE products SET stock = stock - ? WHERE id = ?',
@@ -65,7 +75,10 @@ router.post('/', async (req, res) => {
     } catch (error) {
         await connection.rollback();
         console.error("Checkout Error:", error);
-        res.status(400).json({ error: "Transaction failed. Cart has not been cleared." });
+        
+        // Expose the true error message to the frontend alert instead of a hard-coded string
+        const errorMessage = error.message || "Transaction failed. Cart has not been cleared.";
+        res.status(400).json({ error: errorMessage });
     } finally {
         connection.release();
     }
