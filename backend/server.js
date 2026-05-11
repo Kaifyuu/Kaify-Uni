@@ -94,6 +94,9 @@ app.put('/api/products/:id', (req, res) => {
     });
 });
 
-// Cloud-Ready Port Listener
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Store Server running on port ${PORT}`));
+// Render provides the PORT variable automatically
+const PORT = process.env.PORT || 3000; 
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
