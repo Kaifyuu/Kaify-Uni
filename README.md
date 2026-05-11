@@ -2,6 +2,14 @@
 A repository made for my university project.
 You can view the progress so far at https://kaifyuu.github.io/Kaify-Uni/
 
+## Setup Instructions
+To run this project locally:
+1. Clone the repository to your local machine.
+2. Navigate to the `backend` directory and run `npm install`.
+3. Create a `.env` file in the `backend` folder with your Database credentials (`DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`).
+4. Start the backend server using `node server.js` or `npm start`.
+5. Open `index.html` using VS Code Live Server.
+
 ![E-Commerce UML Diagram](https://uml.planttext.com/plantuml/png/VLNhRjem5FuVAUzWCMdxHLSAj1GXL9f2LwdLK14Fu3c7O3MnaUsqOvTtt_4DceWkI1X_v_FvpitXHXkgJ5sLQLB2nX0ZYUB5rf2SAs26Iv4cQVA5V4EGP58OHRKXAxClkIZIHBzmiQEALgJMmAW6yZjD23wtbBqKIjOYpsGf5Vaqxos6YtamIfM32eRpYz7ehkSD2nI8i7kEy8h_0j8RfCdVzwgK6IH_fBbmpodDblCMt93OeLTQV9pOOcO_9qJwxlcVY2tip6QWqyHdqhcl0UkRrTh82bI7K4qST20yGy6r0GLvauNuMeCwy5Ru3MIMLrmWNr7SEfv33gmbtLSW3Bcd1jxetZ4YDfdCVwAGeELqUdIxvRiTjfxCbW-EVG2QT9lQWzY2ueOA1caIuYFTFrEV4Hb7WhRqMEREl9l92hDYG9ObDHkfgauiVXoopgsIRxX-9YkWYk5aKaDBMRY8rbclnNwYmhfURQKFDSEH3zIB5ZNR0dkHTJJtM-POVVALFCg2Yq0Rd1PSAhdXfGtpkvqB7TX3p_xmJ5upWxLvnIP8jG-7Bbjqv37G6dqlwX9LogR6rMdljWNspBCi8L979yE9_iCq1EvrkroqP3Ls2Ovpy8oxwBftdFEbuXLLUymBoqVTcmNxxYUXsvtwhhtVNZIt_UPsOBqUPif1GmkvyGx0PNDxrToEV5ohFVQpmdx6wMr5Y3cx0w4E5kYTEoHcxFsidnxn92lh70WLkNE7ontiS071E6X_9nnbZEyHhDyw8xaZQ295jEK8Mva-EJkpWLxZJPbCk3VQktKqOIGjczNmqkEmsfwW3isjoCvcXJd-W2rzvNYXyNqV8h5-1y5ltxa5TzvxlS5V-2_n3m00)
 
 ```mermaid
