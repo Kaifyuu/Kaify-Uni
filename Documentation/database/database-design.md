@@ -6,34 +6,21 @@
 ## 2. Entity-Relationship Diagram (ERD)
 ```mermaid
 erDiagram
-    USERS ||--o{ ORDERS : "User_ID"
-    
-    USERS {
-        int id PK
-        string name
-        string username
-        string password
-    }
-    
+    USERS ||--o{ ORDERS : "places"
+    ORDERS ||--o{ ORDER_ITEMS : "contains"
+    PRODUCTS ||--o{ ORDER_ITEMS : "included in"
+
     ORDERS {
         int id PK
         int userId FK
         date date
         float total
-        json items
-        int statusStep
-        string statusText
     }
-    
-    PRODUCTS {
+
+    ORDER_ITEMS {
         int id PK
-        string name
-        string category
-        float price
-        int stock
-        float rating
-        string description
-        string imageUrl
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal price
     }
-    
-    ORDERS }o--|{ PRODUCTS : "contains"
