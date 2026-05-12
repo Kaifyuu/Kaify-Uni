@@ -54,6 +54,7 @@
                     <li class="nav-item"><a class="nav-link text-dark" href="#products">Products</a></li>
                 </ul>
                 <div class="d-flex gap-2">
+                    <a id="adminDashBtn" href="admin.html" class="btn btn-warning d-none">Admin Panel</a>
                     <button id="authBtn" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#authModal">Login / Register</button>                    
                     <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
                         Cart <span id="cartCount" class="badge bg-light text-dark ms-1">0</span>
@@ -236,6 +237,13 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="cart.js"></script>
     <script>
+        // --- SESSION-BASED CART CLEARING ---
+        // If this is a new browser session (tab/window), empty the cart
+        if (!sessionStorage.getItem('session_started')) {
+            localStorage.removeItem('shopping_cart');
+            sessionStorage.setItem('session_started', 'true');
+        }
+
         // Automatically detect if we are on localhost or live on GitHub Pages
         const API_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') 
             ? 'http://localhost:3000/' 
@@ -462,16 +470,26 @@ async function filterProducts() {
 
         const checkLoginState = () => {
             const btn = document.getElementById('authBtn');
+            const adminBtn = document.getElementById('adminDashBtn');
             const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const isAdmin = localStorage.getItem('isAdmin') === '1' || localStorage.getItem('isAdmin') === 'true';
+
             btn.innerText = loggedIn ? 'My Profile' : 'Login / Register';
             btn.dataset.bsTarget = loggedIn ? '#profileOffcanvas' : '#authModal';
             btn.dataset.bsToggle = loggedIn ? 'offcanvas' : 'modal';
+
+            if (loggedIn && isAdmin) {
+                adminBtn.classList.remove('d-none');
+            } else {
+                adminBtn.classList.add('d-none');
+            }
         };
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.setItem('isLoggedIn', 'false');
             localStorage.removeItem('userId'); 
             localStorage.removeItem('jwtToken');
+            localStorage.removeItem('isAdmin');
             updateOrderHistoryUI([]); 
             checkLoginState();
             bootstrap.Offcanvas.getInstance(document.getElementById('profileOffcanvas')).hide();

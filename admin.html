@@ -263,11 +263,12 @@
                     bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
                     initDashboard();
                 } else {
-                    const err = await response.json();
-                    alert(`Error: ${err.error}`);
+                    const errData = await response.json();
+                    // THE FIX: Specify why the creation/edit failed (e.g. Duplicate ID)
+                    alert(`Action Failed: ${errData.error || "Please check if the Product ID is unique and all fields are valid."}`);
                 }
             } catch (error) {
-                alert("Server error during product save.");
+                alert("Server connection failed. Could not save product.");
             }
         });
 
