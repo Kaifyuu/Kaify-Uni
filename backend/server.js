@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 
 // --- JWT VERIFICATION MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
@@ -145,6 +145,16 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error("Status Update Error:", err);
         res.status(500).json({ error: "Failed to advance order status." });
+    }
+});
+
+// Global Error Handler for "Go-Live"
+app.use((err, req, res, next) => {
+    console.error("Internal Server Error:", err.stack); // Log internally for developer
+    if (process.env.NODE_ENV === 'production') {
+        res.status(500).json({ error: "Internal Server Error" }); // Hide stack trace from user
+    } else {
+        res.status(500).json({ error: err.message, stack: err.stack });
     }
 });
 
