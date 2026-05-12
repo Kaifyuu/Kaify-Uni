@@ -106,21 +106,76 @@ app.get('/api/admin/orders', authenticateToken, adminOnly, async (req, res) => {
     }
 });
 
-// 6. Admin: Update Product Stock directly in MySQL
-app.put('/api/products/:id', authenticateToken, adminOnly, async (req, res) => {
+// 6. Admin: Cancel Order (Return stock + add comment)
+app.put('/api/admin/orders/:id/cancel', authenticateToken, adminOnly, async (req, res) => {
+    const connection = await db.getConnection();
     try {
-        const newStock = req.body.stock;
-        const productId = req.params.id;
+        await connection.beginTransaction();
+        const orderId = req.params.id;
+        const { comment } = req.body;
+
+        // 1. Check if already cancelled
+        const [order] = await connection.query('SELECT statusStep FROM orders WHERE id = ?', [orderId]);
+        if (order.length === 0) throw new Error("Order not found");
+        if (order[0].statusStep === -1) throw new Error("Order already cancelled");
+
+        // 2. Get items to return stock
+        const [items] = await connection.query('SELECT productId, quantity FROM order_items WHERE orderId = ?', [orderId]);
         
-        await db.query('UPDATE products SET stock = ? WHERE id = ?', [newStock, productId]);
-        res.json({ message: 'Stock updated successfully' });
+        for (const item of items) {
+            await connection.query('UPDATE products SET stock = stock + ? WHERE id = ?', [item.quantity, item.productId]);
+        }
+
+        // 3. Update order status and comment
+        await connection.query(
+            'UPDATE orders SET statusStep = -1, statusText = "Cancelled", cancelComment = ? WHERE id = ?',
+            [comment || "No reason provided", orderId]
+        );
+
+        await connection.commit();
+        res.json({ message: "Order cancelled and stock returned." });
     } catch (err) {
-        console.error("Stock Update Error:", err); // Developer sees this
-        res.status(500).json({ error: "Failed to update product stock." }); // User sees this
+        await connection.rollback();
+        console.error("Cancel Order Error:", err);
+        res.status(500).json({ error: err.message || "Failed to cancel order." });
+    } finally {
+        connection.release();
     }
 });
 
-// 7. Admin: Advance Order Status (Multi-Step Logic)
+// 7. Admin: Delete Order (Return stock if not already cancelled, then delete)
+app.delete('/api/admin/orders/:id', authenticateToken, adminOnly, async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+        const orderId = req.params.id;
+
+        const [order] = await connection.query('SELECT statusStep FROM orders WHERE id = ?', [orderId]);
+        if (order.length === 0) throw new Error("Order not found");
+
+        // If not already cancelled, return the stock first
+        if (order[0].statusStep !== -1) {
+            const [items] = await connection.query('SELECT productId, quantity FROM order_items WHERE orderId = ?', [orderId]);
+            for (const item of items) {
+                await connection.query('UPDATE products SET stock = stock + ? WHERE id = ?', [item.quantity, item.productId]);
+            }
+        }
+
+        // Delete (order_items has CASCADE normally, but let's be safe or check FK)
+        await connection.query('DELETE FROM orders WHERE id = ?', [orderId]);
+
+        await connection.commit();
+        res.json({ message: "Order deleted and stock returned." });
+    } catch (err) {
+        await connection.rollback();
+        console.error("Delete Order Error:", err);
+        res.status(500).json({ error: "Failed to delete order." });
+    } finally {
+        connection.release();
+    }
+});
+
+// 8. Admin: Advance Order Status (Multi-Step Logic)
 app.put('/api/admin/orders/:id/status', authenticateToken, adminOnly, async (req, res) => {
     try {
         const orderId = req.params.id;
@@ -134,9 +189,12 @@ app.put('/api/admin/orders/:id/status', authenticateToken, adminOnly, async (req
         
         let currentStep = results[0].statusStep;
         
-        // Gatekeeper Validation: Stop if it's already delivered
+        // Gatekeeper Validation: Stop if it's already delivered or cancelled
         if (currentStep >= 3) {
             return res.status(400).json({ error: "Order is already fully delivered." });
+        }
+        if (currentStep === -1) {
+            return res.status(400).json({ error: "Cannot advance a cancelled order." });
         }
         
         // Step B: Calculate the next step and text
