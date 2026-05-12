@@ -128,7 +128,7 @@ app.put('/api/admin/orders/:id/cancel', authenticateToken, adminOnly, async (req
 
         // 3. Update order status and comment
         await connection.query(
-            'UPDATE orders SET statusStep = -1, statusText = "Cancelled", cancelComment = ? WHERE id = ?',
+            "UPDATE orders SET statusStep = -1, statusText = 'Cancelled', cancelComment = ? WHERE id = ?",
             [comment || "No reason provided", orderId]
         );
 
