@@ -192,11 +192,11 @@
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <label class="form-label">Expiry</label>
-                                <input type="text" class="form-control" placeholder="MM/YY" required>
+                                <input type="text" class="form-control" pattern="(0[1-9]|1[0-2])\/[0-9]{2}" title="Must be MM/YY format (e.g. 12/25)" placeholder="MM/YY" required>
                             </div>
                             <div class="col-6 mb-3">
                                 <label class="form-label">CVV</label>
-                                <input type="text" class="form-control" pattern="\d{3,4}" required>
+                                <input type="text" class="form-control" pattern="\d{3}" title="Must be 3 digits" placeholder="123" required>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -556,6 +556,7 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
         }
         
         fetchOrders();
+        requestProducts(); // THE FIX: Refresh the product grid and allProducts array to reflect new stock
         e.target.classList.add('d-none');
         document.getElementById('checkoutSuccess').classList.remove('d-none');
         submitBtn.innerText = originalBtnText;
