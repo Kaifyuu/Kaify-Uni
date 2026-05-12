@@ -4,10 +4,25 @@ const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// --- JWT VERIFICATION MIDDLEWARE ---
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ error: "Access denied. No token provided." });
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ error: "Invalid or expired token." });
+        req.user = user;
+        next();
+    });
+};
 
 // Add this near the top of server.js where you define your app
 const productRoutes = require('./routes/products');
@@ -21,10 +36,10 @@ const db = require('./db');
 // Delete your old app.get('/api/products', ...) block.
 // Replace it with this single line:
 app.use('/api/products', productRoutes);
-app.use('/api/checkout', checkoutRoutes); 
+app.use('/api/checkout', authenticateToken, checkoutRoutes); 
 
 // --- FETCH ORDERS ROUTE ---
-app.get('/api/orders/:userId', async (req, res) => {
+app.get('/api/orders/:userId', authenticateToken, async (req, res) => {
     try {
         const [orders] = await db.query('SELECT * FROM orders WHERE userId = ?', [req.params.userId]);
         res.status(200).json(orders);
@@ -50,7 +65,7 @@ const processMockPayment = (cardNumber) => {
 };
 
 // 4. Save Personalized Order (Now with Payment Validation!)
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', authenticateToken, async (req, res) => {
     const { userId, date, total, items, statusStep, statusText, paymentDetails } = req.body;
     
     // Step 1: Verify the payment FIRST
@@ -74,7 +89,7 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // 5. Admin: Fetch ALL Orders (Global)
-app.get('/api/admin/orders', async (req, res) => {
+app.get('/api/admin/orders', authenticateToken, async (req, res) => {
     try {
         const [results] = await db.query('SELECT * FROM orders ORDER BY id DESC');
         res.json(results);
@@ -85,7 +100,7 @@ app.get('/api/admin/orders', async (req, res) => {
 });
 
 // 6. Admin: Update Product Stock directly in MySQL
-app.put('/api/products/:id', async (req, res) => {
+app.put('/api/products/:id', authenticateToken, async (req, res) => {
     try {
         const newStock = req.body.stock;
         const productId = req.params.id;
@@ -99,7 +114,7 @@ app.put('/api/products/:id', async (req, res) => {
 });
 
 // 7. Admin: Advance Order Status (Multi-Step Logic)
-app.put('/api/admin/orders/:id/status', async (req, res) => {
+app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
     try {
         const orderId = req.params.id;
         

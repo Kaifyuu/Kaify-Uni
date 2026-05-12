@@ -63,9 +63,18 @@
     ? 'http://localhost:3000/' 
     : 'https://kaify-uni-backend.onrender.com/';
  async function initDashboard() {
+            const token = localStorage.getItem('jwtToken');
+            if (!token) {
+                alert("Unauthorized access. Please login.");
+                window.location.href = 'index.html';
+                return;
+            }
+
             try {
                 // 1. Fetch Global Orders from Database
-                const ordersRes = await fetch(`${API_URL}api/admin/orders`);
+                const ordersRes = await fetch(`${API_URL}api/admin/orders`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const orders = await ordersRes.json();
                 
                 const orderList = document.getElementById('adminOrderList');
@@ -115,6 +124,7 @@ orderList.innerHTML += `
         }
 
         async function updateStock(id, name, currentStock) {
+            const token = localStorage.getItem('jwtToken');
             const newStock = prompt(`Update stock for ${name}:`, currentStock);
             
             // Validate input
@@ -123,7 +133,10 @@ orderList.innerHTML += `
                     // Send PUT request to Node.js backend
                     const response = await fetch(`${API_URL}api/products/${id}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
                         body: JSON.stringify({ stock: parseInt(newStock) })
                     });
                     
@@ -137,21 +150,24 @@ orderList.innerHTML += `
                     alert("Server error during stock update.");
                 }
             }
-            async function advanceOrderStatus(orderId) {
-    try {
-        const response = await fetch(`${API_URL}api/admin/orders/${orderId}/status`, {
-            method: 'PUT'
-        });
-        
-        if (!response.ok) throw new Error('Failed to advance order status');
-        
-        // Refresh the dashboard to show the new status text and remove the button if delivered
-        initDashboard();
-    } catch (err) {
-        console.error(err);
-        alert('Error updating order status.');
-    }
-}
+        }
+
+        async function advanceOrderStatus(orderId) {
+            const token = localStorage.getItem('jwtToken');
+            try {
+                const response = await fetch(`${API_URL}api/admin/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to advance order status');
+                
+                // Refresh the dashboard to show the new status text and remove the button if delivered
+                initDashboard();
+            } catch (err) {
+                console.error(err);
+                alert('Error updating order status.');
+            }
         }
 
         initDashboard();

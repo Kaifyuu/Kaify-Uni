@@ -242,7 +242,7 @@
             : 'https://kaify-uni-backend.onrender.com/'; 
         let allProducts = [];
 async function requestProducts() {
-try {
+    try {
         const response = await fetch(`${API_URL}api/products`);
         
         if (!response.ok) {
@@ -265,9 +265,28 @@ try {
         renderUI(allProducts);
 
     } catch (error) {
-        console.error("Error fetching catalog:", error);
-        // 3. Print the EXACT error to the screen so you aren't flying blind
-        document.getElementById('catalog').innerHTML = `<p class="text-danger text-center w-100 py-5">Connection Issue: ${error.message}</p>`;
+        console.warn("Primary API failed, attempting fallback to local JSON:", error);
+        try {
+            // Fallback for GitHub Pages compatibility
+            const fallbackRes = await fetch('./data/json/products.json');
+            if (!fallbackRes.ok) throw new Error("Fallback file not found.");
+            const fallbackData = await fallbackRes.json();
+            
+            allProducts = fallbackData;
+            populateCategories(allProducts);
+            renderUI(allProducts);
+            
+            // Show a small notice that we are in offline/fallback mode
+            const catalog = document.getElementById('catalog');
+            const notice = document.createElement('div');
+            notice.className = 'col-12 alert alert-warning text-center small mb-4';
+            notice.innerText = "Running in Fallback Mode: Database connection unavailable.";
+            catalog.prepend(notice);
+
+        } catch (fallbackError) {
+            console.error("Critical Error: Both API and Fallback failed.", fallbackError);
+            document.getElementById('catalog').innerHTML = `<p class="text-danger text-center w-100 py-5">Connection Issue: ${error.message}</p>`;
+        }
     }
 }
 
@@ -308,41 +327,44 @@ try {
             });
         }
 
+let filterController; 
+
 async function filterProducts() {
-    // 1. Grab the current values from your UI inputs
+    if (filterController) filterController.abort();
+    filterController = new AbortController();
+    const { signal } = filterController;
+
     const search = document.getElementById('searchInput').value.toLowerCase();
     const category = document.getElementById('categorySelect').value;
     const sort = document.getElementById('sortSelect').value;
 
-    // 2. The Gatekeeper Check: Build the URL dynamically based on the category dropdown
     const endpoint = category 
         ? `${API_URL}api/products?category=${category}` 
         : `${API_URL}api/products`;
 
-try {
-        // 3. Ask the Node.js backend/MySQL for the filtered category data
-        const response = await fetch(endpoint);
+    try {
+        const response = await fetch(endpoint, { signal });
         
         if (!response.ok) throw new Error("Server down");
         
         let data = await response.json();
 
-        // THE FIX: Convert MySQL decimal strings to numbers before sorting/rendering
         data.forEach(item => {
             item.price = parseFloat(item.price);
         });
 
-        // 4. We still do Search and Sort locally on the data the backend gave us
         data = data.filter(p => p.name.toLowerCase().includes(search));
 
         if (sort === 'price-asc') data.sort((a, b) => a.price - b.price);
+        if (sort === 'price-desc') data.sort((a, b) => b.price - a.price);
+        if (sort === 'name-asc') data.sort((a, b) => a.name.localeCompare(b.name));
+        if (sort === 'name-desc') data.sort((a, b) => b.name.localeCompare(a.name));
 
-        // 5. Draw the final items to the screen
         renderUI(data);
 
     } catch (error) {
+        if (error.name === 'AbortError') return;
         console.error("Filtering failed:", error);
-        alert("Could not filter products. The server might be down.");
     }
 }
 
@@ -376,7 +398,7 @@ try {
         document.getElementById('catalog').addEventListener('click', e => {
             const id = e.target.dataset.id;
             if (e.target.classList.contains('view-details-btn')) {
-                const p = allProducts.find(x => x.id === id);
+                const p = allProducts.find(x => x.id == id);
                 document.getElementById('productDetailsBody').innerHTML = `
                     <div class="row g-4 mt-1">
                         <div class="col-md-6"><img src="${p.imageUrl}" class="img-fluid rounded border" alt="${p.name}"></div>
@@ -400,7 +422,7 @@ try {
                 if (e.target.classList.contains('view-details-btn')) {
                 const id = e.target.dataset.id;
                 bootstrap.Modal.getInstance(document.getElementById('productDetailsModal')).hide();
-                const p = allProducts.find(x => x.id === id);
+                const p = allProducts.find(x => x.id == id);
                 document.getElementById('productDetailsBody').innerHTML = `
                     <div class="row g-4 mt-1">
                         <div class="col-md-6"><img src="${p.imageUrl}" class="img-fluid rounded border" alt="${p.name}"></div>
@@ -447,8 +469,9 @@ try {
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.setItem('isLoggedIn', 'false');
-            localStorage.removeItem('userId'); // Clear session
-            updateOrderHistoryUI([]); // Wipe the UI clean
+            localStorage.removeItem('userId'); 
+            localStorage.removeItem('jwtToken');
+            updateOrderHistoryUI([]); 
             checkLoginState();
             bootstrap.Offcanvas.getInstance(document.getElementById('profileOffcanvas')).hide();
         });
@@ -458,11 +481,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const u = document.getElementById('loginEmail').value;
     const p = document.getElementById('loginPassword').value;
-
-    if (u === 'admin' && p === 'admin123') {
-        window.location.href = 'admin.html';
-        return;
-    }
 
     try {
         const res = await fetch(`${API_URL}api/login`, {
@@ -482,7 +500,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         
         checkLoginState();
         fetchOrders();
-        bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('authModal')).hide();
     } catch (err) {
         alert('Server connection failed.');
     }
@@ -494,23 +512,21 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
     if (cartState.length === 0) return alert("Cart is empty.");
     
     const userId = localStorage.getItem('userId');
-    if (!userId) {
+    const token = localStorage.getItem('jwtToken');
+    if (!userId || !token) {
         bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
         return alert("You must be logged in to checkout!");
     }
 
-    // 1. Grab the inputs
     const ccInput = document.querySelector('input[placeholder="16 Digits Required"]').value;
     const shippingVal = document.getElementById('shippingSelect').value;
     const userEmail = localStorage.getItem('userEmail') || 'guest@example.com'; 
 
-    // 2. Setup button states (These were missing in your paste!)
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerText;
     submitBtn.innerText = "Processing Payment...";
     submitBtn.disabled = true;
 
-    // 3. Prepare the Payload
     const payload = {
         userId: userId,
         items: cartState,
@@ -520,16 +536,17 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
     };
 
     try {
-        // 4. Hit the new Gatekeeper route
         const response = await fetch(`${API_URL}api/checkout`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(payload)
         });
         
         const data = await response.json();
 
-        // 5. Handle Server-Side Rejection
         if (!response.ok) {
             alert(`Payment Error: ${data.error}`);
             submitBtn.innerText = originalBtnText;
@@ -537,14 +554,13 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
             return; 
         }
         
-        // 6. Success! Update UI and clear cart
         fetchOrders();
         e.target.classList.add('d-none');
         document.getElementById('checkoutSuccess').classList.remove('d-none');
         submitBtn.innerText = originalBtnText;
         submitBtn.disabled = false;
         cartState = []; 
-        updateCartDisplay(); // Make sure this matches your UI render function
+        updateCartDisplay(); 
         localStorage.removeItem('shopping_cart'); 
         
     } catch (err) {
@@ -555,13 +571,15 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
     }
 });
 
-// Fetch orders from backend
 async function fetchOrders() {
             const userId = localStorage.getItem('userId');
-            if (!userId) return; // Do not fetch if it's a guest
+            const token = localStorage.getItem('jwtToken');
+            if (!userId || !token) return; 
 
             try {
-                const response = await fetch(`${API_URL}api/orders/${userId}`);
+                const response = await fetch(`${API_URL}api/orders/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const orders = await response.json();
                 updateOrderHistoryUI(orders);
             } catch (err) {
