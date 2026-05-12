@@ -24,6 +24,13 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+const adminOnly = (req, res, next) => {
+    if (!req.user || !req.user.isAdmin) {
+        return res.status(403).json({ error: "Access denied. Admin privileges required." });
+    }
+    next();
+};
+
 // Add this near the top of server.js where you define your app
 const productRoutes = require('./routes/products');
 const checkoutRoutes = require('./routes/checkout');
@@ -89,7 +96,7 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
 });
 
 // 5. Admin: Fetch ALL Orders (Global)
-app.get('/api/admin/orders', authenticateToken, async (req, res) => {
+app.get('/api/admin/orders', authenticateToken, adminOnly, async (req, res) => {
     try {
         const [results] = await db.query('SELECT * FROM orders ORDER BY id DESC');
         res.json(results);
@@ -100,7 +107,7 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
 });
 
 // 6. Admin: Update Product Stock directly in MySQL
-app.put('/api/products/:id', authenticateToken, async (req, res) => {
+app.put('/api/products/:id', authenticateToken, adminOnly, async (req, res) => {
     try {
         const newStock = req.body.stock;
         const productId = req.params.id;
@@ -114,7 +121,7 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
 });
 
 // 7. Admin: Advance Order Status (Multi-Step Logic)
-app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
+app.put('/api/admin/orders/:id/status', authenticateToken, adminOnly, async (req, res) => {
     try {
         const orderId = req.params.id;
         

@@ -498,10 +498,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         localStorage.setItem('jwtToken', data.token); 
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userId', data.userId);
+        localStorage.setItem('isAdmin', data.isAdmin);
         
         checkLoginState();
-        fetchOrders();
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('authModal')).hide();
+
+        if (data.isAdmin) {
+            window.location.href = 'admin.html';
+        } else {
+            fetchOrders();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('authModal')).hide();
+        }
     } catch (err) {
         alert('Server connection failed.');
     }
