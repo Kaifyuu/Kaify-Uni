@@ -351,6 +351,9 @@ async function filterProducts() {
 
         data.forEach(item => {
             item.price = parseFloat(item.price);
+            // UPDATE THE MASTER LIST with the fresh stock data from the server
+            const masterIdx = allProducts.findIndex(p => p.id == item.id);
+            if (masterIdx !== -1) allProducts[masterIdx] = item;
         });
 
         data = data.filter(p => p.name.toLowerCase().includes(search));
@@ -407,7 +410,7 @@ async function filterProducts() {
                             <div class="text-warning fs-5 mb-2">&#9733; <span class="text-muted small">${p.rating} / 5.0</span></div>
                             <h4 class="text-success fw-bold mb-3">$${p.price.toFixed(2)}</h4>
                             <p class="text-muted flex-grow-1">${p.description}</p>
-                            <button class="btn btn-primary btn-lg w-100 add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">Add to Cart</button>
+                            <button class="btn btn-primary btn-lg w-100 add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-stock="${p.stock}">Add to Cart</button>
                         </div>
                     </div>
                     <hr>
@@ -421,7 +424,6 @@ async function filterProducts() {
             document.getElementById('productDetailsBody').addEventListener('click', e => {
                 if (e.target.classList.contains('view-details-btn')) {
                 const id = e.target.dataset.id;
-                bootstrap.Modal.getInstance(document.getElementById('productDetailsModal')).hide();
                 const p = allProducts.find(x => x.id == id);
                 document.getElementById('productDetailsBody').innerHTML = `
                     <div class="row g-4 mt-1">
@@ -431,14 +433,13 @@ async function filterProducts() {
                             <div class="text-warning fs-5 mb-2">&#9733; <span class="text-muted small">${p.rating} / 5.0</span></div>
                             <h4 class="text-success fw-bold mb-3">$${p.price.toFixed(2)}</h4>
                             <p class="text-muted flex-grow-1">${p.description}</p>
-                            <button class="btn btn-primary btn-lg w-100 add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">Add to Cart</button>
+                            <button class="btn btn-primary btn-lg w-100 add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-stock="${p.stock}">Add to Cart</button>
                         </div>
                     </div>
                     <hr>
                     <h6>Customers also bought:</h6>
                     <div id="recommendationContainer" class="row g-2 mt-2"></div>`;
                 loadRecommendations(id);
-                bootstrap.Modal.getOrCreateInstance(document.getElementById('productDetailsModal')).show();
             }
         });
 
