@@ -320,7 +320,7 @@ async function requestProducts() {
                 grid.innerHTML += `
                     <div class="col-md-4 col-sm-6">
                         <div class="card h-100 shadow-sm border-0">
-                            <img src="${product.imageUrl}" class="card-img-top border-bottom" alt="${product.name}" style="height: 200px; object-fit: cover;">
+                            <img src="${product.imageUrl}" class="card-img-top border-bottom" alt="${product.name}" style="height: 200px; object-fit: cover;" loading="lazy">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title text-dark mb-1">${product.name}</h5>
                                 <div class="text-warning mb-2">&#9733; <span class="text-muted small">${product.rating}</span></div>
@@ -561,14 +561,20 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
     };
 
     try {
+        // --- STRESS TEST: Handle Hanging Network with Timeout ---
+        const timeoutController = new AbortController();
+        const timeoutId = setTimeout(() => timeoutController.abort(), 30000); // 30s timeout
+
         const response = await fetch(`${API_URL}api/checkout`, {
             method: 'POST',
+            signal: timeoutController.signal,
             headers: { 
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(payload)
         });
+        clearTimeout(timeoutId);
         
         const data = await response.json();
 
@@ -646,9 +652,14 @@ const updateOrderHistoryUI = (orders) => {
     });
 };
 
+let recController;
 async function loadRecommendations(productId) {
+    if (recController) recController.abort();
+    recController = new AbortController();
+    const { signal } = recController;
+
     try {
-        const response = await fetch(`${API_URL}api/products/${productId}/recommendations`);
+        const response = await fetch(`${API_URL}api/products/${productId}/recommendations`, { signal });
         if (!response.ok) throw new Error('Failed to load recommendations');
         
         const recommendations = await response.json();

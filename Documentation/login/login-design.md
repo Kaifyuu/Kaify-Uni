@@ -1,41 +1,43 @@
-# Login Security Architecture
+# Login & Admin Security Architecture
 
-## Sequence Diagram (Login Handshake)
+## Sequence Diagram (RBAC Handshake)
 ```mermaid
 sequenceDiagram
     participant Client as Client (Browser)
-    participant Gateway as API Gateway
     participant Server as Auth Server (Express.js)
     participant DB as Database (MySQL)
 
-    note over Client, Gateway: 1. Client sends email/password
-    Client->>Gateway: POST /login {email, password} (via HTTPS)
-    Gateway->>Server: Route request to Auth Controller
-    
-    note over Server, DB: 2. Server checks database
+    Client->>Server: POST /api/login {email, password}
     Server->>DB: Query: findUser(email)
     
     alt User Found
-        DB-->>Server: Return User Data (with Hashed Password)
-        Server->>Server: bcrypt.compare(inputPassword, storedHash)
+        DB-->>Server: Return User (id, hash, isAdmin)
+        Server->>Server: bcrypt.compare()
         
         alt Password Matches
-            note over Server, Server: 3. Server creates a Token
-            Server->>Server: jwt.sign({userId}, secret) -> Token
+            note over Server: 1. Sign JWT with isAdmin flag
+            Server->>Server: jwt.sign({id, isAdmin}, secret)
+            Server-->>Client: 200 OK + {token, userId, isAdmin}
             
-            note over Server, Client: 4. Server sends Token back to Client
-            Server-->>Gateway: Return 200 OK + { token }
-            Gateway-->>Client: Response 200 OK + { token }
-            
-            note over Client, Client: 5. Client stores Token
-            Client->>Client: localStorage.setItem('token', token)
+            alt isAdmin == true
+                Client->>Client: Redirect to admin.html
+            else isAdmin == false
+                Client->>Client: Show Profile Offcanvas
+            end
         else Password Invalid
-            Server-->>Gateway: Return 401 Unauthorized
-            Gateway-->>Client: Response 401 (Invalid email or password)
+            Server-->>Client: 401 Unauthorized
         end
-        
     else User Not Found
-        DB-->>Server: Return null
-        Server-->>Gateway: Return 401 Unauthorized
-        Gateway-->>Client: Response 401 (Invalid email or password)
+        Server-->>Client: 401 Unauthorized
     end
+
+    note over Client, Server: 2. Protected Route Access
+    Client->>Server: GET /api/admin/orders (Header: Authorization: Bearer Token)
+    Server->>Server: verifyToken() -> extract {isAdmin}
+    
+    alt isAdmin == true
+        Server-->>Client: 200 OK + Global Orders List
+    else isAdmin == false
+        Server-->>Client: 403 Forbidden (Access Denied)
+    end
+```

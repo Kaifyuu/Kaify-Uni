@@ -1,28 +1,28 @@
-# Product Filter Architecture
+# Product Filter & Search Architecture
 
-## 1. The Contract Table
-| Component | Request (The Order) | Response (The Delivery) |
+## 1. Concurrency Contract
+| Feature | Implementation | QA Benefit |
 | :--- | :--- | :--- |
-| **Method** | GET | |
-| **Endpoint** | `/api/products?category=Merchandise` | |
-| **Headers** | `Accept: application/json` | `Content-Type: application/json` |
-| **Status Code** | | 200 OK (or 500 Internal Server Error) |
-| **Body** | (Empty) | `[{"id": "3", "name": "Physical Merchandise T-Shirt", "category": "Merchandise"...}]` |
+| **Search Debounce** | `setTimeout(300ms)` | Prevents excessive API spam while typing. |
+| **Race Condition** | `AbortController` | Kills previous fetch if user changes filters rapidly. |
+| **Data Sync** | `allProducts` Master Update | Syncs local grid stock with live server data during filter. |
 
-## 2. Sequence Diagram
+## 2. Sequence Diagram (Debounced Search)
 ```mermaid
 sequenceDiagram
-    participant Client as Browser (Frontend)
-    participant API as Express Gatekeeper
-    participant Logic as Controller / Service
+    participant User
+    participant Browser
+    participant Controller as AbortController
+    participant API as Backend (MySQL)
 
-    Client->>API: GET /api/products?category=Merchandise
+    User->>Browser: Types "App..."
+    note right of Browser: Wait 300ms
+    Browser->>Controller: abort() previous request (if any)
+    Browser->>API: GET /api/products?category=...
     activate API
-    API->>Logic: Pass query param 'Merchandise'
-    activate Logic
-    Logic->>Logic: Filter products.json by category
-    Logic-->>API: Return filtered subset
-    deactivate Logic
-    API-->>Client: 200 OK + Filtered JSON Body
+    API-->>Browser: Return fresh product data (with stock)
     deactivate API
+    Browser->>Browser: Update allProducts Master Array
+    Browser->>Browser: Filter data by "App"
+    Browser->>User: Render UI Grid
 ```

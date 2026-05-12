@@ -180,6 +180,7 @@
 
                 // 2. Fetch Live Inventory (Sorted by ID)
                 const productsRes = await fetch(`${API_URL}api/products?sortById=true`);
+                if (!productsRes.ok) throw new Error("Failed to load inventory.");
                 currentProducts = await productsRes.json();
                 
                 const table = document.getElementById('inventoryTable');

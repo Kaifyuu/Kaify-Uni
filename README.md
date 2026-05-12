@@ -1,152 +1,83 @@
-# Kaify-Uni
-A repository made for my university project.
-You can view the progress so far at https://kaifyuu.github.io/Kaify-Uni/
+# Kaify-Uni 🛍️
+A robust Full-Stack E-Commerce platform built for the 960121 University Course. 
+The project features a secure Express.js backend, a high-performance MySQL database, and a visually immersive, responsive frontend hosted on GitHub Pages.
 
-## Setup Instructions
+**Live Demo:** [https://kaifyuu.github.io/Kaify-Uni/](https://kaifyuu.github.io/Kaify-Uni/)
+
+---
+
+## 🚀 Key Features
+
+### 🛒 Customer Experience
+- **Dynamic Catalog:** Real-time search and category filtering with **AbortController** to prevent race conditions.
+- **Smart Recommendations:** Personalized product suggestions based on relational SQL joins.
+- **Atomic Checkout:** Secure payment simulation with **MM/YY & CVV validation** and server-side total verification.
+- **Inventory Awareness:** Real-time stock tracking with "Low Stock" warnings and optimistic/pessimistic UI updates.
+- **Order Tracking:** Visual progress bar for real-time tracking of order fulfillment steps.
+
+### 🔐 Security & Architecture
+- **JWT Authentication:** Stateless authentication with JWT tokens stored securely.
+- **Role-Based Access (RBAC):** Strict separation between Customers and Admin roles.
+- **Controller-Route-Service Pattern:** Decoupled backend architecture for maximum maintainability.
+- **Concurrency Control:** SQL `FOR UPDATE` locking to prevent inventory overselling during high-traffic checkout.
+- **Input Sanitization:** Regex-based validation and parameterized SQL queries to prevent XSS and SQL Injection.
+
+### 🛠️ Admin Powers
+- **Inventory CRUD:** Full ability to add, edit, and delete products (names, IDs, prices, stock, etc.).
+- **Numerical ID Sorting:** Smart inventory view sorted numerically (1, 2, 10 instead of 1, 10, 2).
+- **Order Processing:** Advance order status (Placed → Packed → Shipped → Delivered).
+- **Advanced Cancellation:** Cancel orders with mandatory reason comments and automatic stock recovery.
+
+---
+
+## 🛠️ Setup Instructions
+
 To run this project locally:
-1. Clone the repository to your local machine.
-2. Navigate to the `backend` directory and run `npm install`.
-3. Create a `.env` file in the `backend` folder with your Database credentials (`DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`).
-4. Start the backend server using `node server.js` or `npm start`.
-5. Open `index.html` using VS Code Live Server.
 
-![E-Commerce UML Diagram](https://uml.planttext.com/plantuml/png/VLNhRjem5FuVAUzWCMdxHLSAj1GXL9f2LwdLK14Fu3c7O3MnaUsqOvTtt_4DceWkI1X_v_FvpitXHXkgJ5sLQLB2nX0ZYUB5rf2SAs26Iv4cQVA5V4EGP58OHRKXAxClkIZIHBzmiQEALgJMmAW6yZjD23wtbBqKIjOYpsGf5Vaqxos6YtamIfM32eRpYz7ehkSD2nI8i7kEy8h_0j8RfCdVzwgK6IH_fBbmpodDblCMt93OeLTQV9pOOcO_9qJwxlcVY2tip6QWqyHdqhcl0UkRrTh82bI7K4qST20yGy6r0GLvauNuMeCwy5Ru3MIMLrmWNr7SEfv33gmbtLSW3Bcd1jxetZ4YDfdCVwAGeELqUdIxvRiTjfxCbW-EVG2QT9lQWzY2ueOA1caIuYFTFrEV4Hb7WhRqMEREl9l92hDYG9ObDHkfgauiVXoopgsIRxX-9YkWYk5aKaDBMRY8rbclnNwYmhfURQKFDSEH3zIB5ZNR0dkHTJJtM-POVVALFCg2Yq0Rd1PSAhdXfGtpkvqB7TX3p_xmJ5upWxLvnIP8jG-7Bbjqv37G6dqlwX9LogR6rMdljWNspBCi8L979yE9_iCq1EvrkroqP3Ls2Ovpy8oxwBftdFEbuXLLUymBoqVTcmNxxYUXsvtwhhtVNZIt_UPsOBqUPif1GmkvyGx0PNDxrToEV5ohFVQpmdx6wMr5Y3cx0w4E5kYTEoHcxFsidnxn92lh70WLkNE7ontiS071E6X_9nnbZEyHhDyw8xaZQ295jEK8Mva-EJkpWLxZJPbCk3VQktKqOIGjczNmqkEmsfwW3isjoCvcXJd-W2rzvNYXyNqV8h5-1y5ltxa5TzvxlS5V-2_n3m00)
+### 1. Backend Setup
+1. Navigate to the `backend` directory.
+2. Install dependencies: `npm install`.
+3. Create a `.env` file in the `backend` folder with your credentials:
+   ```env
+   DB_HOST=your_mysql_host
+   DB_USER=your_user
+   DB_PASSWORD=your_password
+   DB_NAME=your_database
+   JWT_SECRET=your_super_secret_key
+   PORT=3000
+   ```
+4. (Optional) Run the migration script if tables are missing: `node migrate.js` (if provided).
+5. Start the server: `npm start`.
 
-```mermaid
-flowchart TD
-    %% Styling for UML Activity Diagram conventions
-    classDef startEnd fill:#333,stroke:#333,stroke-width:2px,color:#fff,shape:circle;
-    classDef activity fill:#f9f9f9,stroke:#333,stroke-width:1px;
-    classDef decision fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,shape:diamond;
+### 2. Frontend Setup
+1. Open `index.html` using a local server (e.g., VS Code Live Server).
+2. The frontend automatically detects if it's running on `localhost` and connects to your local backend.
 
-    %% Nodes
-    Start((Start)):::startEnd
-    Nav[Navigate to Registration Page]:::activity
-    Input[Enter Name, Email, and Password]:::activity
-    Validate{Is Input Valid?}:::decision
-    ShowErr[Display Validation Error]:::activity
-    CheckDB{Does Email Exist?}:::decision
-    ShowExistErr[Display 'Email in Use' Error]:::activity
-    SaveDB[Save User to Database]:::activity
-    SendEmail[Send Verification Email]:::activity
-    Success[Display Success Message]:::activity
-    End((End)):::startEnd
+---
 
-    %% Flow/Paths
-    Start --> Nav
-    Nav --> Input
-    Input --> Validate
-    
-    %% Validation Loop
-    Validate -->|No| ShowErr
-    ShowErr --> Input
-    
-    %% Database Check Loop
-    Validate -->|Yes| CheckDB
-    CheckDB -->|Yes| ShowExistErr
-    ShowExistErr --> Input
-    
-    %% Success Path
-    CheckDB -->|No| SaveDB
-    SaveDB --> SendEmail
-    SendEmail --> Success
-    Success --> End
-```
-```mermaid
-sequenceDiagram
-    %% Actors and Objects
-    participant Browser
-    participant JS as JavaScript
-    participant Server
+## 📂 Project Structure
 
-    %% The Execution Flow
-    Browser->>JS: requestProducts()
-    
-    activate JS
-    JS->>Server: fetch()
-    
-    activate Server
-    Server-->>JS: return JSON
-    deactivate Server
-    
-    JS->>Browser: renderProducts()
-    deactivate JS
-```
-```mermaid
-flowchart TD
-    %% Styling
-    classDef startEnd fill:#333,stroke:#333,stroke-width:2px,color:#fff,shape:circle;
-    classDef activity fill:#f9f9f9,stroke:#333,stroke-width:1px;
-    classDef decision fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,shape:diamond;
-
-    %% Nodes
-    Start((Start)):::startEnd
-    UserAction[User Action: <br> Type Search or Select Category]:::activity
-    CaptureInput[Capture Input: <br> Get Search Term & Category]:::activity
-    FilterArray[Filter Array: <br> Compare inputs against allProducts]:::activity
-    CheckResults{Are there matching <br> products?}:::decision
-    UpdateDOM_Grid[Update DOM: <br> Render Product Grid]:::activity
-    UpdateDOM_Empty[Update DOM: <br> Show 'No results found' message]:::activity
-    End((End)):::startEnd
-
-    %% Flow
-    Start --> UserAction
-    UserAction --> CaptureInput
-    
-    %% Implicitly answering Consideration #1
-    CaptureInput -->|If inputs are empty, matches ALL| FilterArray
-    
-    FilterArray --> CheckResults
-    
-    %% Answering Consideration #2
-    CheckResults -->|Yes| UpdateDOM_Grid
-    CheckResults -->|No| UpdateDOM_Empty
-    
-    UpdateDOM_Grid --> End
-    UpdateDOM_Empty --> End
+```text
+├── backend/
+│   ├── controllers/      # Route logic handlers
+│   ├── services/         # Business logic & DB transactions
+│   ├── routes/           # API Endpoint definitions
+│   ├── db.js             # MySQL Connection Pool
+│   └── server.js         # Express configuration & Middleware
+├── Documentation/        # Technical design & UML diagrams
+├── data/json/            # Local fallback data for offline mode
+└── index.html            # Main E-Commerce SPA
 ```
 
-![E-Commerce System Architecture Component Diagram](https://uml.planttext.com/plantuml/png/ZLLTJzim57sFbFzmLIG-f44P6XAWQO9-X88OL4rO7xOzkCbjwk76aUrIkcd_VTUE4qe7qzeNQfzpp_6zn-PS6wRCOYx2GE3KW96WU3upa765gU6o20Fzm8kIAJQ7LCvBMM1XOhCI21R1YbnW68J13Wo825rP6CMq0GlXHVug7Nw50T2dmzA7NCb5aNMba0gs-k-ZuwZlDwNAKFcDmwEJazxxQYCYYNhPVSBWzxfCnWoRC8rlgaHHTDhzy8fArEaU7lN-JoKLSf6zBN5ilwz8dFRjzryIOL1IDPOZjBg2ssub71NiZcVCm19Xik32xBLgwQzZd417oQL6zQtO7IIVRzhTE6v_OGKNWi5rlFSTc8QgrgR2HLaAdZ8xQ2-Jp11kySb0fCWUBQr9NGolO2GNXd1jiBengaSdYmVvmJkubHaU_D2qsNyg5MfTILUekiR2-9H88HptUfmG8oOukV0KY_A4g-AHZ4krMcCvJBFXWNUspR0DtHcc3-Ho4r-l-nuqCMdrw2z_-X6MWgMeGSYKYPYgspPjKnVlRjSQSK_DXeiqfOaR3RsEgsyNUnsF62gPBLBoGBM5p6kCNsvWbUS1r-w07kGMBSJvh8BMwZzHsmicN3UvjKXcwUTOAf5HBmpcoirHh_aSijNS9kYI6LooLJEes2XU8j0y_OJSRq-APxmiwUhQxORHPterbDfuF45ernFwSyORNyyQM6INYcSLms7yYNOW4d89SkgkQXZuc7_St__aim9dq891aWnZIiQe7oVM2r3fPZxL--Jc0bCqwMolPKjxkgtaWdPMvLN3ZSnvqHvXJgssMLm3FWUiGTVJYv6fT8Rw1Rx9LmFlqXiAyM8ovox3reXJj-Wg5HQBBDFjiUAEeJ0ZKSu4rNusu5hGPAGcDI5gmtr9BKCxC9a-KETgAvRdOqEic3qI9k8K5_uJisf7Ry3NZvtGevyJfAfBgjR0vacgCQ-1MsCKzAPZgvxkY_e-OsVsF3GnJOvSOEtHkRqOAjjaLAaYoYKMgDn17ILHz5xPH6vjCFwsL5qeklbJhkQODTR2u9poIF_e_W00)
+---
 
-```mermaid
-flowchart TD
-    Start((Start)) --> Call[Call addToCart<br>productID]
-    Call --> Search[Search 'cart array' for<br>matching 'productID']
-    Search --> Decision{Does this ID<br>already exist in<br>the cart array?}
-    
-    Decision -- YES --> Inc[Increment 'quantity'<br>of existing item]
-    Decision -- NO --> Push[Create new item object & push<br>to 'cart array' with quantity = 1]
-    
-    Inc --> Update[Updated Cart<br>Array state]
-    Push --> Update
-    Update --> End(((End)))
-    
-    classDef default fill:#e1e8f0,stroke:#333,stroke-width:2px,color:#000;
-    classDef decision fill:#d0dce8,stroke:#333,stroke-width:2px,color:#000;
-    classDef yesPath fill:#d0dce8,stroke:#333,stroke-width:2px,color:#000;
-    classDef noPath fill:#d1e8d5,stroke:#333,stroke-width:2px,color:#000;
-    
-    class Decision decision;
-    class Inc yesPath;
-    class Push noPath;
-```
-```mermaid
-sequenceDiagram
-    participant Client as Browser (Frontend)
-    participant Server as Express Backend
-    participant DB as JSON File (Data)
+## 🎓 Course Alignment (960121)
+This project implements several advanced concepts from the course sessions:
+- **Session 3-4:** Event Delegation, Debouncing, and LocalStorage state persistence.
+- **Session 9:** Microservice thinking via Controller-Route-Service separation.
+- **Session 10:** Production "Go-Live" audit (Payload limits, Global Error Handling, environment isolation).
 
-    Client->>Server: GET /api/products (Headers: Accept JSON)
-    activate Server
-    
-    alt Server is Healthy
-        Server->>DB: Read products.json
-        activate DB
-        DB-->>Server: Return Data Array
-        deactivate DB
-        Server-->>Client: 200 OK + JSON Body
-    else Server is Down / DB Missing
-        Server-->>Client: 500 Internal Server Error (or 404)
-    end
-    deactivate Server
-```
+---
+
+## 🛡️ License
+Distributed under the ISC License. See `package.json` for more information.

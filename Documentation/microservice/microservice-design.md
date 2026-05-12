@@ -1,23 +1,63 @@
-# Microservice Boundary Map
+# Microservice Boundary Map (CRS Pattern)
 
 ## 1. GenAI Prompt
-**Prompt:** "Act as a Software Architect. I currently have a Node.js Modular Monolith with three main routes: Auth, Products, and Checkout. I want to migrate this to a Microservice Architecture. Write a markdown document that maps the boundaries of these three components into distinct, independent services, explaining what database tables they would own and how they would communicate."
+**Prompt:** "Act as a Software Architect. Refactor a Node.js Modular Monolith into a Controller-Route-Service (CRS) architecture. Explain how this separation of concerns maps to future microservice boundaries. Specifically, define how the Checkout Service manages independent database transactions and interacts with the Product Catalog layer."
 
-## 2. Component Boundaries (Future State)
+## 2. Architectural Boundaries (Current State)
 
-When migrating our Modular Monolith to Microservices, the system will be split into three independent servers to ensure isolation and vertical scalability:
+We have refactored the monolith into a strict **Controller-Route-Service (CRS)** pattern. This architectural shift ensures that business logic is isolated from HTTP handling, making it ready for future microservice extraction:
 
-### Service A: Identity & Auth Service
-* **Responsibility:** Manages user registration, login, and JWT token issuance.
-* **Database Ownership:** `users` table.
-* **Simulated Communication:** Other services will rely on the JWT token generated here. If a direct check is needed, they would use a fetch call like `fetch('http://auth-service/api/verify')` instead of direct DB queries.
+### Layer 1: Routes (Gatekeepers)
+- **Files:** `backend/routes/*.js`
+- **Role:** Map URLs to Controller functions.
+- **Middleware:** Applies JWT `authenticateToken` and `adminOnly` protections.
 
-### Service B: Product Catalog Service
-* **Responsibility:** Serves product data, handles search/filtering, and manages inventory levels.
-* **Database Ownership:** `products` table.
-* **Decoupling Proof:** This service operates entirely independently. If the Auth Service goes offline, guests can still browse the catalog seamlessly.
+### Layer 2: Controllers (Orchestrators)
+- **Files:** `backend/controllers/*.js`
+- **Role:** Extract request data (body, params), perform basic schema validation (regex), and send HTTP responses.
+- **Independence:** They don't know *how* data is saved; they only know which Service to call.
 
-### Service C: Order & Checkout Service
-* **Responsibility:** Validates payment methods, calculates totals, and persists historical orders.
-* **Database Ownership:** `orders` table.
-* **Simulated Communication:** When an order is placed, this service would theoretically send an event to the Product Catalog Service to decrement the stock using a message broker or simulated fetch call.
+### Layer 3: Services (Logic Engines)
+- **Files:** `backend/services/*.js`
+- **Role:** Execute business logic, manage SQL Transactions, and interact with the database.
+- **Decoupling:** `checkoutService.js` handles the complex relational logic of atomic inventory updates and order placement.
+
+---
+
+## 3. Component Diagram (Microservice Thinking)
+
+```mermaid
+graph TD
+    subgraph Client_Side [Frontend SPA]
+        UI[index.html / admin.html]
+    end
+
+    subgraph API_Gateway [API Layer]
+        R_Auth[auth.js]
+        R_Prod[products.js]
+        R_Check[checkout.js]
+    end
+
+    subgraph Controllers [Controller Layer]
+        C_Check[checkoutController.js]
+    end
+
+    subgraph Services [Service Layer]
+        S_Check[checkoutService.js]
+    end
+
+    subgraph Persistence [Database Layer]
+        DB[(MySQL Database)]
+    end
+
+    UI --> R_Auth
+    UI --> R_Prod
+    UI --> R_Check
+
+    R_Check --> C_Check
+    C_Check --> S_Check
+    S_Check --> DB
+    
+    R_Auth --> DB
+    R_Prod --> DB
+```
